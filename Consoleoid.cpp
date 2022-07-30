@@ -8,8 +8,8 @@ using namespace std;
 
 #define mWidth 40
 #define mHeight 20
-#define bWidth mWidth - 5
-#define bHeight mHeight / 3
+#define bWidth  mWidth - 5
+#define bHeight mHeight / 5
 #define PlayerSize 7
 #define PlayerLives 3
 
@@ -156,7 +156,7 @@ public:
     }
     bool IsLastLive()
     {
-        if (this->lives <= 0)
+        if (this->lives <= 1)
         {
             return true;
         }
@@ -217,6 +217,7 @@ public:
         this->offset_x = offset_x;
         this->offset_y = offset_y;
         short int rand_int;
+        this->max_coins = 5;
         for (int j = 0; j < bHeight; j += 1)
         {
             for (int i = 0; i < bWidth; i += 1)
@@ -229,12 +230,13 @@ public:
         {
             for (int i = 0; i < bWidth; i += 2)
             {
+                this->max_coins++;
                 rand_int = (rand() % 3 + 1);
                 if (rand_int == 1)
                     bricks_map->map1[j][i] = 'V';
                 else if (rand_int == 2)
                     bricks_map->map1[j][i] = 'U';
-                else 
+                else
                     map->map1[j][i] = 'v';
             }
         }
@@ -249,10 +251,14 @@ public:
             }
         }
     }
+    int GetMaxCoins()
+    {
+        return this->max_coins;
+    }
 
 private:
     TMap *bricks_map;
-    int offset_x, offset_y;
+    int offset_x, offset_y, max_coins;
 };
 
 class Ball
@@ -389,7 +395,7 @@ public:
         brick_map = _bricks_map;
         brick_on_map_y = int(this->y) - offset_y;
         brick_on_map_x = int(this->x) - offset_x;
-        if (brick_on_map_y < 0 || brick_on_map_x < 0 || brick_on_map_y > bHeight -1 || brick_on_map_x > bWidth -1)
+        if (brick_on_map_y < 0 || brick_on_map_x < 0 || brick_on_map_y > bHeight - 1 || brick_on_map_x > bWidth - 1)
             return false;
         if (brick_map->map1[brick_on_map_y][brick_on_map_x] != ' ')
         {
@@ -412,12 +418,23 @@ int main()
     TMap global_map;
     TMap brick_map;
     global_map.Border();
-
+    global_map.Show();
     Player Pl((mWidth / 2), (mHeight - 3), PlayerSize, 'T', PlayerLives, &global_map);
     Pl.SetCoins(0);
 
     BlockPlaser Blocks(&brick_map, 2, 2);
-    Ball Orb('O', mHeight/2, mWidth/2);
+    Ball Orb('O', mHeight / 2, mWidth / 2);
+
+    MoveXY((mWidth / 2) - 10, mHeight / 2);
+    cout << "Game start in: ";
+    for (int i = 0; i < 3; i++)
+    {
+        cout << 3 - i;
+        Sleep(1000);
+    }
+    cout << " --> GO!";
+    Sleep(1000);
+
     while (GetKeyState(VK_ESCAPE) >= 0)
     {
         global_map.Clear();
@@ -432,6 +449,14 @@ int main()
         }
         if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2))
             Pl.SetCoins(Pl.GetCoins() + 1);
+        if (Pl.GetCoins() == 2)
+        {
+            MoveXY((mWidth / 2) - 5, mHeight / 2);
+            cout << "You win!";
+            Sleep(5000);
+
+            return 0;
+        }
         Pl.Move();
         global_map.Show();
 
@@ -439,7 +464,9 @@ int main()
         cout << "Lives: " << Pl.GetLives();
         MoveXY(mWidth + 1, 2);
         cout << "Coins: " << Pl.GetCoins();
-        MoveXY(mWidth + 1, mHeight - 1);
+        MoveXY(mWidth + 1, 4);
+        cout << "Max coins: " << Blocks.GetMaxCoins();
+        MoveXY(mWidth + 1, mHeight - 2);
         cout << "ESC: exit";
         Sleep(100);
     }
