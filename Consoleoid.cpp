@@ -1,180 +1,185 @@
 #include <iostream>
 #include <Windows.h>
 #include <String.h>
-#include <vector>
 #include <cmath>
 
 using namespace std;
 
 #define mWidth 40
 #define mHeight 20
-#define bWidth  mWidth - 5
+#define bWidth mWidth - 5
 #define bHeight mHeight / 5
 #define PlayerSize 7
 #define PlayerLives 3
 
-void MoveXY(int x, int y)
+void MoveXY(int x, int y) // set cursor in console
 {
     COORD pos;
     pos.X = x;
     pos.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
-struct TMap
+
+struct GameMap
 {
-    char map1[mHeight][mWidth + 1];
-    void Clear();
-    void Show();
-    void Border();
+    // TODO: Add design map
+    // TODO: create map with vector
+
+    char map[mHeight][mWidth + 1];
+
+    void addBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol) // add specific borders
+    {
+        for (int j = 0; j < mHeight; j++)
+        {
+            for (int i = 0; i < mWidth; i++)
+            {
+                if (j == 0 && i == 0) // find corner positions
+                {
+                    this->map[j][i] = 'T';
+                }
+                else if (j == 0 && i == mWidth - 1)
+                {
+                    this->map[j][i] = 'T';
+                }
+                else if (j == mHeight - 1 && i == 0)
+                {
+                    this->map[j][i] = 'A';
+                }
+                else if (j == mHeight - 1 && i == mWidth - 1)
+                {
+                    this->map[j][i] = 'A';
+                }
+                else if (j == 0) // find borders positions
+                {
+                    this->map[j][i] = topWallSymbol;
+                }
+                else if (j == mHeight - 1)
+                {
+                    this->map[j][i] = bottomtWallSymbol;
+                }
+                else if (i == 0)
+                {
+                    this->map[j][i] = leftWallSymbol;
+                }
+                else if (i == mWidth - 1)
+                {
+                    this->map[j][i] = rightWallSymbol;
+                }
+                else
+                {
+                    this->map[j][i] = ' ';
+                }
+            }
+            this->map[j][mWidth] = '\n'; // add new line symbol in end of line
+        }
+    }
+
+    void clearInsideBorder()
+    {
+        for (int j = 1; j < mHeight - 1; j++)
+        {
+            for (int i = 1; i < mWidth - 1; i++)
+            {
+                this->map[j][i] = ' ';
+            }
+        }
+    }
+    void show() // sending characters to the console
+    {
+        COORD pos;
+        pos.X = 0;
+        pos.Y = 0;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        cout << this->map[0];
+    }
 };
-
-void TMap::Border()
-{
-    char wall = '|';
-    for (int j = 0; j < mHeight; j++)
-    {
-        for (int i = 0; i < mWidth; i++)
-        {
-            if (j == 0 && i == 0)
-            {
-                map1[j][i] = 'T';
-            }
-            else if (j == 0 && i == mWidth - 1)
-            {
-                map1[j][i] = 'T';
-            }
-            else if (j == mHeight - 1 && i == 0)
-            {
-                map1[j][i] = 'A';
-            }
-            else if (j == mHeight - 1 && i == mWidth - 1)
-            {
-                map1[j][i] = 'A';
-            }
-            else if (j == 0 || j == mHeight - 1)
-            {
-                map1[j][i] = '=';
-            }
-            else if (i == 0 || i == mWidth - 1)
-            {
-                map1[j][i] = wall;
-            }
-            else
-            {
-                map1[j][i] = ' ';
-            }
-        }
-        map1[j][mWidth] = '\n';
-    }
-}
-
-void TMap::Clear()
-{
-    // COORD w_size;
-    // w_size.X = mWidth;
-    // w_size.Y = mHeight;
-    // SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), w_size);
-    for (int j = 1; j < mHeight - 1; j++)
-    {
-        for (int i = 1; i < mWidth - 1; i++)
-        {
-            map1[j][i] = ' ';
-        }
-    }
-}
-void TMap::Show()
-{
-    MoveXY(0, 0);
-    cout << map1[0];
-}
 
 class Player
 {
 public:
-    Player(int start_pos_x, int start_pos_y, short int size, char design, short int lives, TMap *_map)
+    Player(int start_pos_x, int start_pos_y, short int size, char design, short int lives, GameMap *_map)
     {
-        map = _map;
-        pos_x = start_pos_x;
-        pos_y = start_pos_y;
-        this->lives = lives;
-        this->coins = 0;
-        Draw(size, design);
+        map_ = _map;
+        pos_x_ = start_pos_x;
+        pos_y_ = start_pos_y;
+        lives_ = lives;
+        coins_ = 0;
+        draw(size, design);
     }
 
-    void Draw(short int size = 4, char design = '=')
+    void draw(short int size = 4, char design = '=') // add player to the global map
     {
-        this->design = design;
-        this->size = size;
+        design_ = design;
+        size_ = size;
         for (int j = 0; j < size; j++)
         {
-            map->map1[this->pos_y][this->pos_x + j] = this->design;
+            map_->map[pos_y_][pos_x_ + j] = design_;
         }
     }
-    void ChangePos(void)
+    // TODO: merge changePos and move
+    void changePos(void) // update player position on global map
     {
-        for (int j = 0; j < this->size; j++)
+        for (int j = 0; j < size_; j++)
         {
-            map->map1[this->pos_y][this->pos_x + j] = this->design;
+            map_->map[pos_y_][pos_x_ + j] = design_;
         }
     }
-    void Move(const char up = 'w', char left = 'A', char down = 's', char right = 'D')
+    void move(const char up = 'w', char left = 'A', char down = 's', char right = 'D') // player control from keyboard
     {
-        if ((GetKeyState(left) & 0x8000) && pos_x > 1)
+        if ((GetKeyState(left) & 0x8000) && pos_x_ > 1) // check pressed key and player position to stay between borders
         {
-            this->pos_x -= 1;
+            pos_x_ -= 1;
         }
-        else if ((GetKeyState(right) & 0x8000) && pos_x < mWidth - 1 - this->size)
+        else if ((GetKeyState(right) & 0x8000) && pos_x_ < mWidth - 1 - size_) // check pressed key and player position to stay between borders
         {
-            this->pos_x += 1;
+            pos_x_ += 1;
         }
-        ChangePos();
+        changePos();
     }
-    int GetPosX()
+    int getPosX()
     {
-        return this->pos_x;
+        return pos_x_;
     }
-    int GetPosY()
+    int getPosY()
     {
-        return this->pos_y;
+        return pos_y_;
     }
-    int GetLives()
+    int getLives()
     {
-        return this->lives;
+        return lives_;
     }
-    int GetCoins()
+    int getCoins()
     {
-        return this->coins;
+        return coins_;
     }
-    int GetSize()
+    int getSize()
     {
-        return this->size;
+        return size_;
     }
-
-    bool SetCoins(int coins)
+    bool setCoins(int coins)
     {
-        this->coins = coins;
+        coins_ = coins;
     }
-    bool IsLastLive()
+    bool isLastLive() // reduse lives and check that they are out
     {
-        if (this->lives <= 1)
+        if (lives_ <= 1)
         {
             return true;
         }
         else
         {
-            this->lives--;
+            lives_--;
             return false;
         }
     }
 
 private:
-    TMap *map;
-    int pos_x;
-    int pos_y;
-    int coins;
-    short int size, lives;
-    char design;
-    vector<char> player_design;
+    GameMap *map_;
+    int pos_x_;
+    int pos_y_;
+    int coins_;
+    short int size_, lives_;
+    char design_;
 };
 
 class Block
@@ -211,54 +216,55 @@ public:
 class BlockPlaser
 {
 public:
-    BlockPlaser(TMap *map, int offset_x, int offset_y)
+    BlockPlaser(GameMap *map, int offset_x, int offset_y) // set bricks on brick map and set the offest from the global map
     {
-        this->bricks_map = map;
-        this->offset_x = offset_x;
-        this->offset_y = offset_y;
+        bricks_map_ = map;
+        offset_x_ = offset_x;
+        offset_y_ = offset_y;
         short int rand_int;
-        this->max_coins = 5;
-        for (int j = 0; j < bHeight; j += 1)
+        max_coins_ = 5;
+        // TODO: add clear method in GameMap
+        for (int j = 0; j < bHeight; j += 1) // clear brick map
         {
             for (int i = 0; i < bWidth; i += 1)
             {
 
-                bricks_map->map1[j][i] = ' ';
+                bricks_map_->map[j][i] = ' ';
             }
         }
-        for (int j = 0; j < bHeight; j += 2)
+        for (int j = 0; j < bHeight; j += 2) // add on map various blocks
         {
             for (int i = 0; i < bWidth; i += 2)
             {
-                this->max_coins++;
+                this->max_coins_++;
                 rand_int = (rand() % 3 + 1);
                 if (rand_int == 1)
-                    bricks_map->map1[j][i] = 'V';
+                    bricks_map_->map[j][i] = 'V';
                 else if (rand_int == 2)
-                    bricks_map->map1[j][i] = 'U';
+                    bricks_map_->map[j][i] = 'U';
                 else
-                    map->map1[j][i] = 'v';
+                    map->map[j][i] = 'v';
             }
         }
     }
-    void Update(TMap *_map)
+    void update(GameMap *map) // add bricks on global map
     {
         for (int j = 0; j < bHeight; j++)
         {
             for (int i = 0; i < bWidth; i++)
             {
-                _map->map1[j + offset_y][i + offset_x] = bricks_map->map1[j][i];
+                map->map[j + offset_y_][i + offset_x_] = bricks_map_->map[j][i];
             }
         }
     }
     int GetMaxCoins()
     {
-        return this->max_coins;
+        return this->max_coins_;
     }
 
 private:
-    TMap *bricks_map;
-    int offset_x, offset_y, max_coins;
+    GameMap *bricks_map_;
+    int offset_x_, offset_y_, max_coins_;
 };
 
 class Ball
@@ -266,167 +272,177 @@ class Ball
 public:
     Ball(char design = 'O', int start_pos_x = 10, int start_pos_y = 15, int speed = 1)
     {
-        this->x = start_pos_x;
-        this->y = start_pos_y;
-        this->speed = speed;
-        this->dir = 80.0;
-        this->design = design;
+        x_ = start_pos_x;
+        y_ = start_pos_y;
+        speed_ = speed;
+        dir_ = 80.0;
+        design_ = design;
     }
-    void Update(TMap *_map)
+    void update(GameMap *map) // update ball position on map and check collision
     {
-        map = _map;
-        x_end = x + speed * cos((dir * M_PI) / 180.0);
-        float t = cos((dir * M_PI) / 180.0);
-        y_end = y + speed * sin((dir * M_PI) / 180.0);
-        if (x_end < 1 || y_end < 1 || x_end > mWidth - 1 || y_end > mHeight - 1)
+        map_ = map;
+        x_end_ = x_ + speed_ * cos((dir_ * M_PI) / 180.0); // calculate new ball coordinates
+        y_end_ = y_ + speed_ * sin((dir_ * M_PI) / 180.0);
+        if (x_end_ < 1 || y_end_ < 1 || x_end_ > mWidth - 1 || y_end_ > mHeight - 1) // check out of border
         {
-            x_end = mWidth / 2;
-            y_end = mHeight / 2;
+            x_end_ = mWidth / 2;
+            y_end_ = mHeight / 2;
         }
-        if (x_end < 2 || x_end > mWidth - 3)
+        if (x_end_ < 2 || x_end_ > mWidth - 3) // check collision with border and bounce from border
         {
-            if (dir >= 0 && dir < 90)
+            if (dir_ >= 0 && dir_ < 90)
             {
-                dir = 180 - dir;
+                dir_ = 180 - dir_;
             }
-            else if (dir >= 90 && dir < 180)
+            else if (dir_ >= 90 && dir_ < 180)
             {
-                dir = 90 - (180 - dir);
+                dir_ = 90 - (180 - dir_);
             }
-            else if (dir >= 180 && dir < 270)
+            else if (dir_ >= 180 && dir_ < 270)
             {
-                dir = 360 - (dir - 180);
+                dir_ = 360 - (dir_ - 180);
             }
-            else if (dir >= 270 && dir < 360)
+            else if (dir_ >= 270 && dir_ < 360)
             {
-                dir = 270 - (dir - 270);
-            }
-        }
-        else if (y_end < 2)
-        {
-            if (dir >= 0 && dir < 90)
-            {
-                dir = 360 - dir;
-            }
-            else if (dir >= 90 && dir < 180)
-            {
-                dir = 180 + (180 - dir);
-            }
-            else if (dir >= 180 && dir < 270)
-            {
-                dir = 90 + (270 - dir);
-            }
-            else if (dir >= 270 && dir < 360)
-            {
-                dir = (360 - dir);
+                dir_ = 270 - (dir_ - 270);
             }
         }
-        map->map1[int(y_end)][int(x_end)] = design;
-        this->x = x_end;
-        this->y = y_end;
+        else if (y_end_ < 2)
+        {
+            if (dir_ >= 0 && dir_ < 90)
+            {
+                dir_ = 360 - dir_;
+            }
+            else if (dir_ >= 90 && dir_ < 180)
+            {
+                dir_ = 180 + (180 - dir_);
+            }
+            else if (dir_ >= 180 && dir_ < 270)
+            {
+                dir_ = 90 + (270 - dir_);
+            }
+            else if (dir_ >= 270 && dir_ < 360)
+            {
+                dir_ = (360 - dir_);
+            }
+        }
+        map_->map[int(y_end_)][int(x_end_)] = design_; // update ball position
+        x_ = x_end_;
+        y_ = y_end_;
     }
-    bool CheckPlayerCollision(TMap *_map, int player_pos_x, int player_pos_y, int player_size)
+    bool CheckPlayerCollision(GameMap *map, int player_pos_x, int player_pos_y, int player_size) // check collision with player
     {
-        short int rand_int;
-        if (player_pos_y == int(this->y))
+        short int rand_int = 1;
+        if (player_pos_y == int(y_)) // check player and ball line
         {
-            for (int i = player_pos_x; i < player_pos_x + player_size; i++)
+            for (int i = player_pos_x; i < player_pos_x + player_size; i++) // check side of player collision with ball
             {
                 rand_int = (rand() % 45 + 1);
-                if (i == int(this->x) && (i < int(player_pos_x + (player_size / 2))))
+                if (i == int(x_) && (i < int(player_pos_x + (player_size / 2)))) // bounce from left side of the player
                 {
-                    if (dir >= 0 && dir < 90)
+                    if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir = 270 - (90 - dir);
+                        dir_ = 270 - (90 - dir_);
                     }
-                    else if (dir >= 90 && dir < 180)
+                    else if (dir_ >= 90 && dir_ < 180)
                     {
-                        if (dir == 90)
+                        if (dir_ == 90)
                         {
-                            dir = rand_int + 202;
+                            dir_ = rand_int + 202;
                         }
                         else
                         {
-                            dir = 270 - (dir - 90);
+                            dir_ = 270 - (dir_ - 90);
                         }
                     }
                 }
-                else if (i == int(this->x) && (i == int(player_pos_x + (player_size / 2))))
+                else if (i == int(x_) && (i == int(player_pos_x + (player_size / 2)))) // bounce from center of the player
                 {
-                    if (dir >= 0 && dir < 90)
+                    if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir = 270;
+                        dir_ = 270;
                     }
-                    else if (dir >= 90 && dir < 180)
+                    else if (dir_ >= 90 && dir_ < 180)
                     {
-                        dir = 270;
+                        dir_ = 270;
                     }
                 }
-                else if (i == int(this->x) && (i > int(player_pos_x + (player_size / 2))))
+                else if (i == int(x_) && (i > int(player_pos_x + (player_size / 2)))) // bounce from right side of the player
                 {
-                    if (dir >= 0 && dir < 90)
+                    if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir = 270 + (90 - dir);
+                        dir_ = 270 + (90 - dir_);
                     }
-                    else if (dir >= 90 && dir < 180)
+                    else if (dir_ >= 90 && dir_ < 180)
                     {
-                        if (dir == 90)
+                        if (dir_ == 90)
                         {
-                            dir = rand_int + 292;
+                            dir_ = rand_int + 292;
                         }
                         else
                         {
-                            dir = 270 + (dir - 90);
+                            dir_ = 270 + (dir_ - 90);
                         }
                     }
                 }
             }
         }
-        else if (this->y > mHeight - 2)
+        else if (y_ > mHeight - 2) // if ball under player
         {
-            this->y = 10;
+            // TODO: do lost ball event better
+            y_ = 5;
             return false;
         }
         return true;
     }
 
-    bool CheckBrickCollision(TMap *_map, TMap *_bricks_map, int offset_y, int offset_x)
+    bool CheckBrickCollision(GameMap *map, GameMap *bricks_map, int offset_y, int offset_x) // check ball and brick collision
     {
-        brick_map = _bricks_map;
-        brick_on_map_y = int(this->y) - offset_y;
-        brick_on_map_x = int(this->x) - offset_x;
-        if (brick_on_map_y < 0 || brick_on_map_x < 0 || brick_on_map_y > bHeight - 1 || brick_on_map_x > bWidth - 1)
+        brick_map_ = bricks_map;
+        brick_on_map_y_ = int(y_) - offset_y;
+        brick_on_map_x_ = int(x_) - offset_x;
+        if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > bHeight - 1 || brick_on_map_x_ > bWidth - 1)
             return false;
-        if (brick_map->map1[brick_on_map_y][brick_on_map_x] != ' ')
+        if (brick_map_->map[brick_on_map_y_][brick_on_map_x_] != ' ')
         {
-            brick_map->map1[brick_on_map_y][brick_on_map_x] = ' ';
+            // TODO: add bounce brom brick
+            brick_map_->map[brick_on_map_y_][brick_on_map_x_] = ' '; // clear brick position after hit them
             return true;
         }
         return false;
     }
 
 private:
-    float x, y, x_end, y_end, dir, speed;
-    int brick_on_map_y, brick_on_map_x;
-    TMap *map;
-    TMap *brick_map;
-    char design = 'O';
+    float x_, y_, x_end_, y_end_, dir_, speed_;
+    int brick_on_map_y_, brick_on_map_x_;
+    GameMap *map_;
+    GameMap *brick_map_;
+    char design_ = 'O';
 };
 
 int main()
 {
-    TMap global_map;
-    TMap brick_map;
-    global_map.Border();
-    global_map.Show();
-    Player Pl((mWidth / 2), (mHeight - 3), PlayerSize, 'T', PlayerLives, &global_map);
-    Pl.SetCoins(0);
+    GameMap global_map; // create map
+    GameMap brick_map;
+    global_map.addBorder('|', '|', '=', '='); // add border on map
+    global_map.show();                        // show map on screen
 
-    BlockPlaser Blocks(&brick_map, 2, 2);
-    Ball Orb('O', mHeight / 2, mWidth / 2);
+    Player Pl((mWidth / 2), (mHeight - 3), PlayerSize, 'T', PlayerLives, &global_map); // create player
+    Pl.setCoins(0);
 
-    MoveXY((mWidth / 2) - 10, mHeight / 2);
+    BlockPlaser Blocks(&brick_map, 2, 2);   // create bricks
+    Ball Orb('O', mHeight / 2, mWidth / 2); // create orb
+
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
+
+    CONSOLE_CURSOR_INFO cursor;
+    cursor.bVisible = false; // invisible cursor
+    cursor.dwSize = 1;
+    SetConsoleCursorInfo(h, &cursor); // update cursor in console
+
+    MoveXY((mWidth / 2) - 10, mHeight / 2); // print info
     cout << "Game start in: ";
+    SetConsoleTextAttribute(h, 4); // change text color
     for (int i = 0; i < 3; i++)
     {
         cout << 3 - i;
@@ -434,22 +450,23 @@ int main()
     }
     cout << " --> GO!";
     Sleep(1000);
+    SetConsoleTextAttribute(h, 0); // change text color
 
-    while (GetKeyState(VK_ESCAPE) >= 0)
+    while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
-        global_map.Clear();
-        Blocks.Update(&global_map);
-        Orb.Update(&global_map);
-        if (!Orb.CheckPlayerCollision(&global_map, Pl.GetPosX(), Pl.GetPosY(), Pl.GetSize()))
+        global_map.clearInsideBorder();
+        Blocks.update(&global_map); // update positions
+        Orb.update(&global_map);
+        if (!Orb.CheckPlayerCollision(&global_map, Pl.getPosX(), Pl.getPosY(), Pl.getSize())) // check that the player hit the ball
         {
-            if (Pl.IsLastLive())
+            if (Pl.isLastLive()) // if its last life of the player then exit from game
             {
                 return 0;
             }
         }
-        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2))
-            Pl.SetCoins(Pl.GetCoins() + 1);
-        if (Pl.GetCoins() == 2)
+        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2)) // add a coin for hiting the brick
+            Pl.setCoins(Pl.getCoins() + 1);
+        if (Pl.getCoins() == 2) // when the blocks are over
         {
             MoveXY((mWidth / 2) - 5, mHeight / 2);
             cout << "You win!";
@@ -457,21 +474,24 @@ int main()
 
             return 0;
         }
-        Pl.Move();
-        global_map.Show();
+        Pl.move(); // check palyer moving
 
+        SetConsoleTextAttribute(h, 0); // set color and show changes in console
+        global_map.show();
+
+        SetConsoleTextAttribute(h, 14); // show additional information in console
         MoveXY(mWidth + 1, 1);
-        cout << "Lives: " << Pl.GetLives();
+        cout << "Lives: " << Pl.getLives();
         MoveXY(mWidth + 1, 2);
-        cout << "Coins: " << Pl.GetCoins();
+        cout << "Coins: " << Pl.getCoins();
         MoveXY(mWidth + 1, 4);
         cout << "Max coins: " << Blocks.GetMaxCoins();
         MoveXY(mWidth + 1, mHeight - 2);
         cout << "ESC: exit";
-        Sleep(100);
+
+        // TODO: add a speed control
+        Sleep(100); // set game speed
     }
 
     return 0;
 }
-// MoveXY(5, mHeight + 2);
-// cout << "col. i=" << i << " x=" << int(this->x) << "  " << int(player_pos_x + (player_size / 2)) << endl;
