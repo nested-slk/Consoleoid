@@ -7,8 +7,8 @@ using namespace std;
 
 #define mWidth 40
 #define mHeight 20
-#define bWidth mWidth - 5
-#define bHeight mHeight / 5
+#define bWidth 3//mWidth - 5
+#define bHeight 1//mHeight / 5
 #define PlayerSize 7
 #define PlayerLives 3
 
@@ -222,7 +222,7 @@ public:
         offset_x_ = offset_x;
         offset_y_ = offset_y;
         short int rand_int;
-        max_coins_ = 5;
+        max_coins_ = 0;
         // TODO: add clear method in GameMap
         for (int j = 0; j < bHeight; j += 1) // clear brick map
         {
@@ -257,9 +257,9 @@ public:
             }
         }
     }
-    int GetMaxCoins()
+    int getMaxCoins()
     {
-        return this->max_coins_;
+        return max_coins_;
     }
 
 private:
@@ -450,7 +450,7 @@ int main()
     }
     cout << " --> GO!";
     Sleep(1000);
-    SetConsoleTextAttribute(h, 0); // change text color
+    SetConsoleTextAttribute(h, 7); // change text color
 
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
@@ -466,7 +466,7 @@ int main()
         }
         if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2)) // add a coin for hiting the brick
             Pl.setCoins(Pl.getCoins() + 1);
-        if (Pl.getCoins() == 2) // when the blocks are over
+        if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
         {
             MoveXY((mWidth / 2) - 5, mHeight / 2);
             cout << "You win!";
@@ -476,7 +476,7 @@ int main()
         }
         Pl.move(); // check palyer moving
 
-        SetConsoleTextAttribute(h, 0); // set color and show changes in console
+        SetConsoleTextAttribute(h, 7); // set color and show changes in console
         global_map.show();
 
         SetConsoleTextAttribute(h, 14); // show additional information in console
@@ -485,7 +485,7 @@ int main()
         MoveXY(mWidth + 1, 2);
         cout << "Coins: " << Pl.getCoins();
         MoveXY(mWidth + 1, 4);
-        cout << "Max coins: " << Blocks.GetMaxCoins();
+        cout << "Max coins: " << Blocks.getMaxCoins();
         MoveXY(mWidth + 1, mHeight - 2);
         cout << "ESC: exit";
 
