@@ -7,10 +7,10 @@ using namespace std;
 
 #define mWidth 40
 #define mHeight 20
-#define bWidth 3//mWidth - 5
-#define bHeight 1//mHeight / 5
-#define PlayerSize 7
-#define PlayerLives 3
+#define BRICKS_WIDTH 20//mWidth - 5
+#define BRICKS_HEIGHT 1//mHeight / 5
+#define PLAYER_SIZE 7
+#define PLAYER_LIVES 3
 
 void MoveXY(int x, int y) // set cursor in console
 {
@@ -224,17 +224,17 @@ public:
         short int rand_int;
         max_coins_ = 0;
         // TODO: add clear method in GameMap
-        for (int j = 0; j < bHeight; j += 1) // clear brick map
+        for (int j = 0; j < BRICKS_HEIGHT; j += 1) // clear brick map
         {
-            for (int i = 0; i < bWidth; i += 1)
+            for (int i = 0; i < BRICKS_WIDTH; i += 1)
             {
 
                 bricks_map_->map[j][i] = ' ';
             }
         }
-        for (int j = 0; j < bHeight; j += 2) // add on map various blocks
+        for (int j = 0; j < BRICKS_HEIGHT; j += 2) // add on map various blocks
         {
-            for (int i = 0; i < bWidth; i += 2)
+            for (int i = 0; i < BRICKS_WIDTH; i += 2)
             {
                 this->max_coins_++;
                 rand_int = (rand() % 3 + 1);
@@ -249,9 +249,9 @@ public:
     }
     void update(GameMap *map) // add bricks on global map
     {
-        for (int j = 0; j < bHeight; j++)
+        for (int j = 0; j < BRICKS_HEIGHT; j++)
         {
-            for (int i = 0; i < bWidth; i++)
+            for (int i = 0; i < BRICKS_WIDTH; i++)
             {
                 map->map[j + offset_y_][i + offset_x_] = bricks_map_->map[j][i];
             }
@@ -296,7 +296,7 @@ public:
             }
             else if (dir_ >= 90 && dir_ < 180)
             {
-                dir_ = 90 - (180 - dir_);
+                dir_ =  (180 - dir_);
             }
             else if (dir_ >= 180 && dir_ < 270)
             {
@@ -401,7 +401,7 @@ public:
         brick_map_ = bricks_map;
         brick_on_map_y_ = int(y_) - offset_y;
         brick_on_map_x_ = int(x_) - offset_x;
-        if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > bHeight - 1 || brick_on_map_x_ > bWidth - 1)
+        if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > BRICKS_HEIGHT - 1 || brick_on_map_x_ > BRICKS_WIDTH - 1)
             return false;
         if (brick_map_->map[brick_on_map_y_][brick_on_map_x_] != ' ')
         {
@@ -427,10 +427,10 @@ int main()
     global_map.addBorder('|', '|', '=', '='); // add border on map
     global_map.show();                        // show map on screen
 
-    Player Pl((mWidth / 2), (mHeight - 3), PlayerSize, 'T', PlayerLives, &global_map); // create player
+    Player Pl((mWidth / 2), (mHeight - 3), PLAYER_SIZE, 'T', PLAYER_LIVES, &global_map); // create player
     Pl.setCoins(0);
 
-    BlockPlaser Blocks(&brick_map, 2, 2);   // create bricks
+    BlockPlaser Blocks(&brick_map, 4, 2);   // create bricks
     Ball Orb('O', mHeight / 2, mWidth / 2); // create orb
 
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
