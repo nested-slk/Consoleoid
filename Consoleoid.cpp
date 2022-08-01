@@ -172,7 +172,7 @@ public:
             return false;
         }
     }
-
+    // ~Player();
 private:
     GameMap *map_;
     int pos_x_;
@@ -261,7 +261,7 @@ public:
     {
         return max_coins_;
     }
-
+    // ~BlockPlaser();
 private:
     GameMap *bricks_map_;
     int offset_x_, offset_y_, max_coins_;
@@ -411,6 +411,7 @@ public:
         }
         return false;
     }
+    // ~Ball();
 
 private:
     float x_, y_, x_end_, y_end_, dir_, speed_;
@@ -419,6 +420,10 @@ private:
     GameMap *brick_map_;
     char design_ = 'O';
 };
+class Game
+{
+
+};   
 
 int main()
 {
@@ -464,7 +469,7 @@ int main()
                 return 0;
             }
         }
-        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2)) // add a coin for hiting the brick
+        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 4)) // add a coin for hiting the brick
             Pl.setCoins(Pl.getCoins() + 1);
         if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
         {
@@ -478,7 +483,14 @@ int main()
 
         SetConsoleTextAttribute(h, 7); // set color and show changes in console
         global_map.show();
+        if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
+        {
+            MoveXY((mWidth / 2) - 5, mHeight / 2);
+            cout << "You win!";
+            Sleep(5000);
 
+            return 0;
+        }
         SetConsoleTextAttribute(h, 14); // show additional information in console
         MoveXY(mWidth + 1, 1);
         cout << "Lives: " << Pl.getLives();
