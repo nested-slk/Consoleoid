@@ -2,13 +2,15 @@
 #include <Windows.h>
 #include <String.h>
 #include <cmath>
-
+#include <vector>
 using namespace std;
 
+struct GameMap;
+/*
 #define mWidth 40
 #define mHeight 20
-#define BRICKS_WIDTH 20//mWidth - 5
-#define BRICKS_HEIGHT 1//mHeight / 5
+#define BRICKS_WIDTH 20 // mWidth - 5
+#define BRICKS_HEIGHT 1 // mHeight / 5
 #define PLAYER_SIZE 7
 #define PLAYER_LIVES 3
 
@@ -93,18 +95,140 @@ struct GameMap
         cout << this->map[0];
     }
 };
+*/
+struct GameMap
+{
+    vector<vector<char>> globalMapVec;
+    vector<vector<char>> borderMapVec;
+    vector<vector<int>> globalMapDesignVec;
 
+    vector<char> playerDesignMapVec;
+    char ballDesign;
+    char playerDesign;
+
+    COORD mapSize;
+    COORD ballPose;
+    COORD playerPose;
+
+    short int playerSize;
+    void placeOnMap(COORD position, char symbol, WORD textColor, WORD bgColor)
+    {
+        if (position.X > 0 && position.X <= this->mapSize.X && position.Y > 0 && position.Y <= this->mapSize.Y) //
+        {
+            globalMapVec[position.X][position.Y] = symbol;
+            globalMapDesignVec[position.X][position.Y] = setForeGroundAndBackGroundColor(textColor, bgColor);
+        }
+    }
+    void createBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol)
+    {
+        for (int i = 0; i < this->mapSize.Y; i++)
+        {
+            for (int j = 0; j < this->mapSize.X; j++)
+            {
+                if (i == 0) // find borders positions
+                {
+                    globalMapVec[i][j] = topWallSymbol;
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                }
+                else if (i == mapSize.Y - 1)
+                {
+                    globalMapVec[i][j] = bottomtWallSymbol;
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                }
+                else if (j == 0)
+                {
+                    globalMapVec[i][j] = leftWallSymbol;
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                }
+                else if (j == mapSize.X - 1)
+                {
+                    globalMapVec[i][j] = rightWallSymbol;
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                }
+            }
+        }
+    }
+    void createMap(int x, int y)
+    {
+        this->mapSize.X = x;
+        this->mapSize.Y = y;
+
+        globalMapVec.resize(this->mapSize.Y);
+        for (int i = 0; i < this->mapSize.Y; i++)
+        {
+            globalMapVec[i].resize(this->mapSize.X + 1);
+            for (int j = 0; j < this->mapSize.X; j++)
+            {
+                globalMapVec[i][j] = ('.');
+            }
+            globalMapVec[i][this->mapSize.X] = ('\n');
+        }
+
+        globalMapDesignVec.resize(this->mapSize.Y);
+        for (int i = 0; i < this->mapSize.Y; i++)
+        {
+            globalMapDesignVec[i].resize(this->mapSize.X + 1);
+            for (int j = 0; j < this->mapSize.X; j++)
+            {
+                globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(15, 1);
+            }
+            globalMapDesignVec[i][mapSize.X] = setForeGroundAndBackGroundColor(15, 0);
+        }
+    }
+
+    void showMap()
+    {
+        COORD pos;
+        pos.X = 0;
+        pos.Y = 0;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        for (int i = 0; i < mapSize.Y; i++)
+        {
+            for (int j = 0; j <= mapSize.X; j++)
+            {
+                setcolor(globalMapDesignVec[i][j]);
+                cout << globalMapVec[i][j];
+            }
+        }
+    }
+    void setcolor(WORD color)
+    {
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+    }
+    //     colors:
+    //     0 = Black
+    //     1 = Blue
+    //     2 = Green
+    //     3 = Cyan
+    //     4 = Red
+    //     5 = Magenta
+    //     6 = Yellow
+    //     7 = LightGray
+    //     8 = DarkGray
+    //     9 = LightBlue
+    //     10 = LightGreen
+    //     11 = LightCyan
+    //     12 = LightRed
+    //     13 = LightMagenta
+    //     14 = LightYellow
+    //     15 = White
+    int setForeGroundAndBackGroundColor(int ForeGroundColor, int BackGroundColor)
+    {
+        int color = 16 * BackGroundColor + ForeGroundColor;
+        return (color);
+    }
+};
 class Player
 {
 public:
-    Player(int start_pos_x, int start_pos_y, short int size, char design, short int lives, GameMap *_map)
+    Player(int start_pos_x, int start_pos_y, short int size, char design, short int lives, GameMap *gameMap)
     {
-        map_ = _map;
-        pos_x_ = start_pos_x;
-        pos_y_ = start_pos_y;
+        gameMap_ = gameMap;
+        this->position_.X = start_pos_x;
+        this->position_.Y = start_pos_y;
         lives_ = lives;
         coins_ = 0;
-        draw(size, design);
+        // draw(size, design);
     }
 
     void draw(short int size = 4, char design = '=') // add player to the global map
@@ -113,36 +237,32 @@ public:
         size_ = size;
         for (int j = 0; j < size; j++)
         {
-            map_->map[pos_y_][pos_x_ + j] = design_;
+            // map_->map[pos_y_][pos_x_ + j] = design_;
         }
     }
     // TODO: merge changePos and move
-    void changePos(void) // update player position on global map
+    void changePosOnMap(void) // update player position on global map
     {
         for (int j = 0; j < size_; j++)
         {
-            map_->map[pos_y_][pos_x_ + j] = design_;
+            gameMap_->placeOnMap(position_, 'T', 4, 6);
         }
     }
-    void move(const char up = 'w', char left = 'A', char down = 's', char right = 'D') // player control from keyboard
+    void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 's', char right = 'D') // player control from keyboard
     {
-        if ((GetKeyState(left) & 0x8000) && pos_x_ > 1) // check pressed key and player position to stay between borders
+        if ((GetKeyState(left) & 0x8000) && this->position_.X > 1) // check pressed key and player position to stay between borders
         {
-            pos_x_ -= 1;
+            this->position_.X -= 1;
         }
-        else if ((GetKeyState(right) & 0x8000) && pos_x_ < mWidth - 1 - size_) // check pressed key and player position to stay between borders
+        else if ((GetKeyState(right) & 0x8000) && this->position_.X < max_x - 1 - size_) // check pressed key and player position to stay between borders
         {
-            pos_x_ += 1;
+            this->position_.X += 1;
         }
-        changePos();
+        changePosOnMap();
     }
-    int getPosX()
+    COORD getPose()
     {
-        return pos_x_;
-    }
-    int getPosY()
-    {
-        return pos_y_;
+        return position_;
     }
     int getLives()
     {
@@ -172,16 +292,15 @@ public:
             return false;
         }
     }
-
+    // ~Player();
 private:
-    GameMap *map_;
-    int pos_x_;
-    int pos_y_;
+    COORD position_;
+    GameMap *gameMap_;
     int coins_;
     short int size_, lives_;
     char design_;
 };
-
+/*
 class Block
 {
 private:
@@ -261,7 +380,7 @@ public:
     {
         return max_coins_;
     }
-
+    // ~BlockPlaser();
 private:
     GameMap *bricks_map_;
     int offset_x_, offset_y_, max_coins_;
@@ -296,7 +415,7 @@ public:
             }
             else if (dir_ >= 90 && dir_ < 180)
             {
-                dir_ =  (180 - dir_);
+                dir_ = (180 - dir_);
             }
             else if (dir_ >= 180 && dir_ < 270)
             {
@@ -411,6 +530,7 @@ public:
         }
         return false;
     }
+    // ~Ball();
 
 private:
     float x_, y_, x_end_, y_end_, dir_, speed_;
@@ -419,9 +539,37 @@ private:
     GameMap *brick_map_;
     char design_ = 'O';
 };
+*/
+
+class Game
+{
+};
 
 int main()
 {
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
+
+    CONSOLE_CURSOR_INFO cursor;
+    cursor.bVisible = false; // invisible cursor
+    cursor.dwSize = 1;
+    SetConsoleCursorInfo(h, &cursor); // update cursor in console
+
+    
+    GameMap gameMap;
+    gameMap.createMap(20, 10);
+    gameMap.createBorder('|', '|', '=', '-');
+    gameMap.showMap();
+    Sleep(2000);
+    Player Pl(5, 14, 7, 'T', 3, &gameMap);
+    while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
+    {
+
+        Pl.move(3, 5);
+        gameMap.showMap();
+        Sleep(200);
+    }
+
+    /*
     GameMap global_map; // create map
     GameMap brick_map;
     global_map.addBorder('|', '|', '=', '='); // add border on map
@@ -464,7 +612,7 @@ int main()
                 return 0;
             }
         }
-        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 2)) // add a coin for hiting the brick
+        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 4)) // add a coin for hiting the brick
             Pl.setCoins(Pl.getCoins() + 1);
         if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
         {
@@ -478,7 +626,14 @@ int main()
 
         SetConsoleTextAttribute(h, 7); // set color and show changes in console
         global_map.show();
+        if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
+        {
+            MoveXY((mWidth / 2) - 5, mHeight / 2);
+            cout << "You win!";
+            Sleep(5000);
 
+            return 0;
+        }
         SetConsoleTextAttribute(h, 14); // show additional information in console
         MoveXY(mWidth + 1, 1);
         cout << "Lives: " << Pl.getLives();
@@ -492,6 +647,6 @@ int main()
         // TODO: add a speed control
         Sleep(100); // set game speed
     }
-
+*/
     return 0;
 }
