@@ -539,11 +539,18 @@ private:
     GameMap *brick_map_;
     char design_ = 'O';
 };
+<<<<<<< HEAD
 */
 
 class Game
 {
 };
+=======
+class Game
+{
+
+};   
+>>>>>>> 17e009c6796a23ea9af2522ec6f0f04d63b08078
 
 int main()
 {
