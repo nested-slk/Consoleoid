@@ -135,22 +135,22 @@ struct GameMap
                 if (i == 0) // find borders positions
                 {
                     globalMapVec[i][j] = topWallSymbol;
-                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(0, 8);
                 }
                 else if (i == mapSize.Y - 1)
                 {
                     globalMapVec[i][j] = bottomtWallSymbol;
-                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(0, 8);
                 }
                 else if (j == 0)
                 {
                     globalMapVec[i][j] = leftWallSymbol;
-                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(0, 8);
                 }
                 else if (j == mapSize.X - 1)
                 {
                     globalMapVec[i][j] = rightWallSymbol;
-                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(4, 8);
+                    globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(0, 8);
                 }
             }
         }
@@ -268,7 +268,7 @@ public:
             COORD pos;
             pos.X = position_.X + j;
             pos.Y = position_.Y;
-            gameMap_->placeOnMap(pos, 'T', 4, 6);
+            gameMap_->placeOnMap(pos, 'T', 0, 6);
         }
     }
     void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 'S', char right = 'D') // player control from keyboard
@@ -419,7 +419,7 @@ public:
         position_.x = start_pos_x;
         position_.y = start_pos_y;
         speed_ = speed;
-        dir_ = 80.0;
+        dir_ = 10.0;
         design_ = design;
     }
     void changePosOnMap() // update ball position on map and check collision
@@ -427,16 +427,17 @@ public:
         COORD pos;
         pos.X = position_.x;
         pos.Y = position_.y;
-        gameMap_->placeOnMap(pos, design_, 7, 13);
+        gameMap_->placeOnMap(pos, design_, 4, 1);
     }
     void move(int max_x, int max_y) // update ball position on map and check collision
     {
         newPosition_.x = position_.x + speed_ * cos((dir_ * M_PI) / 180.0); // calculate new ball coordinates
-        newPosition_.y = position_.x + speed_ * sin((dir_ * M_PI) / 180.0);
+
+        newPosition_.y = position_.y + speed_ * sin((dir_ * M_PI) / 180.0);
         if (newPosition_.x < 1 || newPosition_.y < 1 || newPosition_.x > max_x - 1 || newPosition_.y > max_y - 1) // check out of border
         {
-            newPosition_.x = max_x / 2;
-            newPosition_.y = max_y / 2;
+            newPosition_.x = float(max_x / 2);
+            newPosition_.y = float(max_y / 2);
         }
         if (newPosition_.x < 2 || newPosition_.x > max_x - 3) // check collision with border and bounce from border
         {
@@ -451,6 +452,7 @@ public:
             else if (dir_ >= 180 && dir_ < 270)
             {
                 dir_ = 360 - (dir_ - 180);
+                if (dir_ == 360) dir_ = 0;
             }
             else if (dir_ >= 270 && dir_ < 360)
             {
@@ -482,7 +484,7 @@ public:
     bool CheckPlayerCollision(Player *player) // check collision with player
     {
         short int rand_int = 1;
-        if (player->getPose().Y == int(this->position_.y - 1)) // check player and ball line
+        if (player->getPose().Y - 1 == int(this->position_.y)) // check player and ball line
         {
             for (int i = player->getPose().X; i < player->getPose().X + player->getSize(); i++) // check side of player collision with ball
             {
@@ -591,7 +593,7 @@ int main()
     gameMap.showMap();
     Sleep(1000);
     Player Pl(MAP_WIDHT / 2, MAP_HEIGHT - 3, PLAYER_SIZE, 'T', PLAYER_LIVES, &gameMap);
-    Ball Orb(3, 3, 2, &gameMap);
+    Ball Orb(3, 3, 1, &gameMap);
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
         gameMap.clearMap();
@@ -603,7 +605,7 @@ int main()
         Orb.CheckPlayerCollision(&Pl);
         Orb.changePosOnMap();
         gameMap.showMap();
-        Sleep(50);
+        // Sleep(50);
     }
 
     /*
