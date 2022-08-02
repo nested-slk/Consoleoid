@@ -6,13 +6,15 @@
 using namespace std;
 
 struct GameMap;
-/*
-#define mWidth 40
-#define mHeight 20
-#define BRICKS_WIDTH 20 // mWidth - 5
-#define BRICKS_HEIGHT 1 // mHeight / 5
+
+#define MAP_WIDHT 40
+#define MAP_HEIGHT 20
 #define PLAYER_SIZE 7
 #define PLAYER_LIVES 3
+/*
+#define BRICKS_WIDTH 20 // mWidth - 5
+#define BRICKS_HEIGHT 1 // mHeight / 5
+
 
 void MoveXY(int x, int y) // set cursor in console
 {
@@ -96,6 +98,11 @@ struct GameMap
     }
 };
 */
+struct FloatCoord
+{
+    float x;
+    float y;
+};
 struct GameMap
 {
     vector<vector<char>> globalMapVec;
@@ -258,8 +265,10 @@ public:
     {
         for (int j = 0; j < size_; j++)
         {
-            position_.X = position_.X + j;
-            gameMap_->placeOnMap(position_, 'T', 4, 6);
+            COORD pos;
+            pos.X = position_.X + j;
+            pos.Y = position_.Y;
+            gameMap_->placeOnMap(pos, 'T', 4, 6);
         }
     }
     void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 'S', char right = 'D') // player control from keyboard
@@ -399,29 +408,37 @@ private:
     GameMap *bricks_map_;
     int offset_x_, offset_y_, max_coins_;
 };
-
+*/
 class Ball
 {
 public:
-    Ball(char design = 'O', int start_pos_x = 10, int start_pos_y = 15, int speed = 1)
+    Ball(int start_pos_x, int start_pos_y, float speed, GameMap *gameMap, char design = 'O')
     {
-        x_ = start_pos_x;
-        y_ = start_pos_y;
+        gameMap_ = gameMap;
+
+        position_.x = start_pos_x;
+        position_.y = start_pos_y;
         speed_ = speed;
         dir_ = 80.0;
         design_ = design;
     }
-    void update(GameMap *map) // update ball position on map and check collision
+    void changePosOnMap() // update ball position on map and check collision
     {
-        map_ = map;
-        x_end_ = x_ + speed_ * cos((dir_ * M_PI) / 180.0); // calculate new ball coordinates
-        y_end_ = y_ + speed_ * sin((dir_ * M_PI) / 180.0);
-        if (x_end_ < 1 || y_end_ < 1 || x_end_ > mWidth - 1 || y_end_ > mHeight - 1) // check out of border
+        COORD pos;
+        pos.X = position_.x;
+        pos.Y = position_.y;
+        gameMap_->placeOnMap(pos, design_, 7, 13);
+    }
+    void move(int max_x, int max_y) // update ball position on map and check collision
+    {
+        newPosition_.x = position_.x + speed_ * cos((dir_ * M_PI) / 180.0); // calculate new ball coordinates
+        newPosition_.y = position_.x + speed_ * sin((dir_ * M_PI) / 180.0);
+        if (newPosition_.x < 1 || newPosition_.y < 1 || newPosition_.x > max_x - 1 || newPosition_.y > max_y - 1) // check out of border
         {
-            x_end_ = mWidth / 2;
-            y_end_ = mHeight / 2;
+            newPosition_.x = max_x / 2;
+            newPosition_.y = max_y / 2;
         }
-        if (x_end_ < 2 || x_end_ > mWidth - 3) // check collision with border and bounce from border
+        if (newPosition_.x < 2 || newPosition_.x > max_x - 3) // check collision with border and bounce from border
         {
             if (dir_ >= 0 && dir_ < 90)
             {
@@ -440,7 +457,7 @@ public:
                 dir_ = 270 - (dir_ - 270);
             }
         }
-        else if (y_end_ < 2)
+        else if (newPosition_.y < 2)
         {
             if (dir_ >= 0 && dir_ < 90)
             {
@@ -459,23 +476,22 @@ public:
                 dir_ = (360 - dir_);
             }
         }
-        map_->map[int(y_end_)][int(x_end_)] = design_; // update ball position
-        x_ = x_end_;
-        y_ = y_end_;
+        position_.x = newPosition_.x;
+        position_.y = newPosition_.y;
     }
-    bool CheckPlayerCollision(GameMap *map, int player_pos_x, int player_pos_y, int player_size) // check collision with player
+    bool CheckPlayerCollision(Player *player) // check collision with player
     {
         short int rand_int = 1;
-        if (player_pos_y == int(y_)) // check player and ball line
+        if (player->getPose().Y == int(this->position_.y - 1)) // check player and ball line
         {
-            for (int i = player_pos_x; i < player_pos_x + player_size; i++) // check side of player collision with ball
+            for (int i = player->getPose().X; i < player->getPose().X + player->getSize(); i++) // check side of player collision with ball
             {
                 rand_int = (rand() % 45 + 1);
-                if (i == int(x_) && (i < int(player_pos_x + (player_size / 2)))) // bounce from left side of the player
+                if (i == int(position_.x) && (i < int(player->getPose().X + (player->getSize() / 2)))) // bounce from left side of the player
                 {
                     if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir_ = 270 - (90 - dir_);
+                        dir_ = 270 - (90 - rand_int + 22);
                     }
                     else if (dir_ >= 90 && dir_ < 180)
                     {
@@ -485,11 +501,11 @@ public:
                         }
                         else
                         {
-                            dir_ = 270 - (dir_ - 90);
+                            dir_ = 270 - (rand_int + 112 - 90);
                         }
                     }
                 }
-                else if (i == int(x_) && (i == int(player_pos_x + (player_size / 2)))) // bounce from center of the player
+                else if (i == int(position_.x) && (i == int(player->getPose().X + (player->getSize() / 2)))) // bounce from center of the player
                 {
                     if (dir_ >= 0 && dir_ < 90)
                     {
@@ -500,11 +516,11 @@ public:
                         dir_ = 270;
                     }
                 }
-                else if (i == int(x_) && (i > int(player_pos_x + (player_size / 2)))) // bounce from right side of the player
+                else if (i == int(position_.x) && (i > int(player->getPose().X + (player->getSize() / 2)))) // bounce from right side of the player
                 {
                     if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir_ = 270 + (90 - dir_);
+                        dir_ = 270 + (90 - rand_int + 22);
                     }
                     else if (dir_ >= 90 && dir_ < 180)
                     {
@@ -514,16 +530,16 @@ public:
                         }
                         else
                         {
-                            dir_ = 270 + (dir_ - 90);
+                            dir_ = 270 + (rand_int + 112 - 90);
                         }
                     }
                 }
             }
         }
-        else if (y_ > mHeight - 2) // if ball under player
+        else if (position_.y > player->getPose().Y) // if ball under player
         {
             // TODO: do lost ball event better
-            y_ = 5;
+            this->position_.y = 3;
             return false;
         }
         return true;
@@ -531,30 +547,32 @@ public:
 
     bool CheckBrickCollision(GameMap *map, GameMap *bricks_map, int offset_y, int offset_x) // check ball and brick collision
     {
-        brick_map_ = bricks_map;
-        brick_on_map_y_ = int(y_) - offset_y;
-        brick_on_map_x_ = int(x_) - offset_x;
-        if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > BRICKS_HEIGHT - 1 || brick_on_map_x_ > BRICKS_WIDTH - 1)
-            return false;
-        if (brick_map_->map[brick_on_map_y_][brick_on_map_x_] != ' ')
-        {
-            // TODO: add bounce brom brick
-            brick_map_->map[brick_on_map_y_][brick_on_map_x_] = ' '; // clear brick position after hit them
-            return true;
-        }
-        return false;
+        // brick_map_ = bricks_map;
+        // brick_on_map_y_ = int(y_) - offset_y;
+        // brick_on_map_x_ = int(x_) - offset_x;
+        // if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > BRICKS_HEIGHT - 1 || brick_on_map_x_ > BRICKS_WIDTH - 1)
+        //     return false;
+        // if (brick_map_->map[brick_on_map_y_][brick_on_map_x_] != ' ')
+        // {
+        //     // TODO: add bounce brom brick
+        //     brick_map_->map[brick_on_map_y_][brick_on_map_x_] = ' '; // clear brick position after hit them
+        //     return true;
+        // }
+        // return false;
     }
     // ~Ball();
 
 private:
-    float x_, y_, x_end_, y_end_, dir_, speed_;
+    FloatCoord position_;
+    FloatCoord newPosition_;
+    GameMap *gameMap_;
+    char design_;
+    float dir_, speed_;
     int brick_on_map_y_, brick_on_map_x_;
     GameMap *map_;
     GameMap *brick_map_;
-    char design_ = 'O';
 };
-<<<<<<< HEAD
-*/
+
 class Game
 {
 };
@@ -566,19 +584,26 @@ int main()
     cursor.bVisible = false; // invisible cursor
     cursor.dwSize = 1;
     SetConsoleCursorInfo(h, &cursor); // update cursor in console
+
     GameMap gameMap;
-    gameMap.createMap(20, 10);
+    gameMap.createMap(MAP_WIDHT, MAP_HEIGHT);
     gameMap.createBorder('|', '|', '=', '-');
     gameMap.showMap();
-    Sleep(2000);
-    Player Pl(10, 5, 7, 'T', 3, &gameMap);
+    Sleep(1000);
+    Player Pl(MAP_WIDHT / 2, MAP_HEIGHT - 3, PLAYER_SIZE, 'T', PLAYER_LIVES, &gameMap);
+    Ball Orb(3, 3, 2, &gameMap);
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
         gameMap.clearMap();
-        Pl.move(20, 10);
+        Pl.move(MAP_WIDHT, MAP_HEIGHT);
         
+        
+        
+        Orb.move(MAP_WIDHT, MAP_HEIGHT);
+        Orb.CheckPlayerCollision(&Pl);
+        Orb.changePosOnMap();
         gameMap.showMap();
-        Sleep(100);
+        Sleep(50);
     }
 
     /*
