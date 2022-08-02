@@ -115,8 +115,8 @@ struct GameMap
     {
         if (position.X > 0 && position.X <= this->mapSize.X && position.Y > 0 && position.Y <= this->mapSize.Y) //
         {
-            globalMapVec[position.X][position.Y] = symbol;
-            globalMapDesignVec[position.X][position.Y] = setForeGroundAndBackGroundColor(textColor, bgColor);
+            globalMapVec[position.Y][position.X] = symbol;
+            globalMapDesignVec[position.Y][position.X] = setForeGroundAndBackGroundColor(textColor, bgColor);
         }
     }
     void createBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol)
@@ -191,6 +191,18 @@ struct GameMap
             }
         }
     }
+    void clearMap()
+    {
+        for (int i = 1; i < mapSize.Y - 1; i++)
+        {
+            for (int j = 1; j < mapSize.X - 1; j++)
+            {
+                globalMapVec[i][j] = ' ';
+                globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(15, 1);
+            }
+        }
+    }
+
     void setcolor(WORD color)
     {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
@@ -228,6 +240,7 @@ public:
         this->position_.Y = start_pos_y;
         lives_ = lives;
         coins_ = 0;
+        size_ = size;
         // draw(size, design);
     }
 
@@ -245,10 +258,11 @@ public:
     {
         for (int j = 0; j < size_; j++)
         {
+            position_.X = position_.X + j;
             gameMap_->placeOnMap(position_, 'T', 4, 6);
         }
     }
-    void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 's', char right = 'D') // player control from keyboard
+    void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 'S', char right = 'D') // player control from keyboard
     {
         if ((GetKeyState(left) & 0x8000) && this->position_.X > 1) // check pressed key and player position to stay between borders
         {
@@ -541,17 +555,9 @@ private:
 };
 <<<<<<< HEAD
 */
-
 class Game
 {
 };
-=======
-class Game
-{
-
-};   
->>>>>>> 17e009c6796a23ea9af2522ec6f0f04d63b08078
-
 int main()
 {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
@@ -560,20 +566,19 @@ int main()
     cursor.bVisible = false; // invisible cursor
     cursor.dwSize = 1;
     SetConsoleCursorInfo(h, &cursor); // update cursor in console
-
-    
     GameMap gameMap;
     gameMap.createMap(20, 10);
     gameMap.createBorder('|', '|', '=', '-');
     gameMap.showMap();
     Sleep(2000);
-    Player Pl(5, 14, 7, 'T', 3, &gameMap);
+    Player Pl(10, 5, 7, 'T', 3, &gameMap);
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
-
-        Pl.move(3, 5);
+        gameMap.clearMap();
+        Pl.move(20, 10);
+        
         gameMap.showMap();
-        Sleep(200);
+        Sleep(100);
     }
 
     /*
