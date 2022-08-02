@@ -11,93 +11,7 @@ struct GameMap;
 #define MAP_HEIGHT 20
 #define PLAYER_SIZE 7
 #define PLAYER_LIVES 3
-/*
-#define BRICKS_WIDTH 20 // mWidth - 5
-#define BRICKS_HEIGHT 1 // mHeight / 5
 
-
-void MoveXY(int x, int y) // set cursor in console
-{
-    COORD pos;
-    pos.X = x;
-    pos.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-}
-
-struct GameMap
-{
-    // TODO: Add design map
-    // TODO: create map with vector
-
-    char map[mHeight][mWidth + 1];
-
-    void addBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol) // add specific borders
-    {
-        for (int j = 0; j < mHeight; j++)
-        {
-            for (int i = 0; i < mWidth; i++)
-            {
-                if (j == 0 && i == 0) // find corner positions
-                {
-                    this->map[j][i] = 'T';
-                }
-                else if (j == 0 && i == mWidth - 1)
-                {
-                    this->map[j][i] = 'T';
-                }
-                else if (j == mHeight - 1 && i == 0)
-                {
-                    this->map[j][i] = 'A';
-                }
-                else if (j == mHeight - 1 && i == mWidth - 1)
-                {
-                    this->map[j][i] = 'A';
-                }
-                else if (j == 0) // find borders positions
-                {
-                    this->map[j][i] = topWallSymbol;
-                }
-                else if (j == mHeight - 1)
-                {
-                    this->map[j][i] = bottomtWallSymbol;
-                }
-                else if (i == 0)
-                {
-                    this->map[j][i] = leftWallSymbol;
-                }
-                else if (i == mWidth - 1)
-                {
-                    this->map[j][i] = rightWallSymbol;
-                }
-                else
-                {
-                    this->map[j][i] = ' ';
-                }
-            }
-            this->map[j][mWidth] = '\n'; // add new line symbol in end of line
-        }
-    }
-
-    void clearInsideBorder()
-    {
-        for (int j = 1; j < mHeight - 1; j++)
-        {
-            for (int i = 1; i < mWidth - 1; i++)
-            {
-                this->map[j][i] = ' ';
-            }
-        }
-    }
-    void show() // sending characters to the console
-    {
-        COORD pos;
-        pos.X = 0;
-        pos.Y = 0;
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-        cout << this->map[0];
-    }
-};
-*/
 struct FloatCoord
 {
     float x;
@@ -124,6 +38,14 @@ struct GameMap
         {
             globalMapVec[position.Y][position.X] = symbol;
             globalMapDesignVec[position.Y][position.X] = setForeGroundAndBackGroundColor(textColor, bgColor);
+        }
+    }
+    void placeOnMap(COORD position, char symbol, WORD dataColor)
+    {
+        if (position.X > 0 && position.X <= this->mapSize.X && position.Y > 0 && position.Y <= this->mapSize.Y) //
+        {
+            globalMapVec[position.Y][position.X] = symbol;
+            globalMapDesignVec[position.Y][position.X] = dataColor;
         }
     }
     void createBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol)
@@ -166,7 +88,7 @@ struct GameMap
             globalMapVec[i].resize(this->mapSize.X + 1);
             for (int j = 0; j < this->mapSize.X; j++)
             {
-                globalMapVec[i][j] = ('.');
+                globalMapVec[i][j] = (' ');
             }
             globalMapVec[i][this->mapSize.X] = ('\n');
         }
@@ -354,61 +276,87 @@ public:
         }
     }
 };
-
+*/
 class BlockPlaser
 {
 public:
-    BlockPlaser(GameMap *map, int offset_x, int offset_y) // set bricks on brick map and set the offest from the global map
+    void createBricks(int brickSize, int stepX, int stepY)
     {
-        bricks_map_ = map;
-        offset_x_ = offset_x;
-        offset_y_ = offset_y;
-        short int rand_int;
-        max_coins_ = 0;
-        // TODO: add clear method in GameMap
-        for (int j = 0; j < BRICKS_HEIGHT; j += 1) // clear brick map
+        for (int i = 0; i < this->mapSize.Y; i += 2)
         {
-            for (int i = 0; i < BRICKS_WIDTH; i += 1)
+            for (int j = 0; j < this->mapSize.X; j = j + brickSize + stepX)
             {
-
-                bricks_map_->map[j][i] = ' ';
-            }
-        }
-        for (int j = 0; j < BRICKS_HEIGHT; j += 2) // add on map various blocks
-        {
-            for (int i = 0; i < BRICKS_WIDTH; i += 2)
-            {
-                this->max_coins_++;
-                rand_int = (rand() % 3 + 1);
-                if (rand_int == 1)
-                    bricks_map_->map[j][i] = 'V';
-                else if (rand_int == 2)
-                    bricks_map_->map[j][i] = 'U';
-                else
-                    map->map[j][i] = 'v';
+                for (int k = 0; k < brickSize; k++)
+                {
+                    bricksMap_->globalMapVec[i][j + k] = ('H');
+                    bricksMap_->globalMapDesignVec[i][j + k] = bricksMap_->setForeGroundAndBackGroundColor(5, 14);
+                }
+                maxCoins_++;
             }
         }
     }
-    void update(GameMap *map) // add bricks on global map
+    BlockPlaser(int x, int y, GameMap *bricksMap) // set bricks on brick map and set the offest from the global map
     {
-        for (int j = 0; j < BRICKS_HEIGHT; j++)
+        bricksMap_ = bricksMap;
+        mapSize.X = x;
+        mapSize.Y = y;
+        this->createBricks(2, 1, 2);
+        //     bricks_map_ = map;
+        //     offset_x_ = offset_x;
+        //     offset_y_ = offset_y;
+        //     short int rand_int;
+        //     max_coins_ = 0;
+        //     // TODO: add clear method in GameMap
+        //     for (int j = 0; j < BRICKS_HEIGHT; j += 1) // clear brick map
+        //     {
+        //         for (int i = 0; i < BRICKS_WIDTH; i += 1)
+        //         {
+
+        //             bricks_map_->map[j][i] = ' ';
+        //         }
+        //     }
+        //     for (int j = 0; j < BRICKS_HEIGHT; j += 2) // add on map various blocks
+        //     {
+        //         for (int i = 0; i < BRICKS_WIDTH; i += 2)
+        //         {
+        //             this->max_coins_++;
+        //             rand_int = (rand() % 3 + 1);
+        //             if (rand_int == 1)
+        //                 bricks_map_->map[j][i] = 'V';
+        //             else if (rand_int == 2)
+        //                 bricks_map_->map[j][i] = 'U';
+        //             else
+        //                 map->map[j][i] = 'v';
+        //         }
+        //     }
+    }
+    void changePosOnMap(GameMap *map, int offset_x, int offset_y) // add bricks on global map
+    {
+        offset_x_ = offset_x;
+        offset_y_ = offset_y;
+        for (int j = 0; j < this->mapSize.Y; j++)
         {
-            for (int i = 0; i < BRICKS_WIDTH; i++)
+            for (int i = 0; i < this->mapSize.X; i++)
             {
-                map->map[j + offset_y_][i + offset_x_] = bricks_map_->map[j][i];
+                COORD pos;
+                pos.X = i + offset_x_;
+                pos.Y = j + offset_y_;
+                map->placeOnMap(pos, bricksMap_->globalMapVec[j][i], bricksMap_->globalMapDesignVec[j][i]);
             }
         }
     }
     int getMaxCoins()
     {
-        return max_coins_;
+        return maxCoins_;
     }
     // ~BlockPlaser();
 private:
-    GameMap *bricks_map_;
-    int offset_x_, offset_y_, max_coins_;
+    GameMap *gameMap_;
+    GameMap *bricksMap_;
+    COORD mapSize;
+    int offset_x_, offset_y_, maxCoins_;
 };
-*/
+
 class Ball
 {
 public:
@@ -452,7 +400,8 @@ public:
             else if (dir_ >= 180 && dir_ < 270)
             {
                 dir_ = 360 - (dir_ - 180);
-                if (dir_ == 360) dir_ = 0;
+                if (dir_ == 360)
+                    dir_ = 0;
             }
             else if (dir_ >= 270 && dir_ < 360)
             {
@@ -546,7 +495,71 @@ public:
         }
         return true;
     }
-
+bool CheckPlayerCollision(Player *player) // check collision with player
+    {
+        short int rand_int = 1;
+        if (player->getPose().Y - 1 == int(this->position_.y)) // check player and ball line
+        {
+            for (int i = player->getPose().X; i < player->getPose().X + player->getSize(); i++) // check side of player collision with ball
+            {
+                rand_int = (rand() % 45 + 1);
+                if (i == int(position_.x) && (i < int(player->getPose().X + (player->getSize() / 2)))) // bounce from left side of the player
+                {
+                    if (dir_ >= 0 && dir_ < 90)
+                    {
+                        dir_ = 270 - (90 - rand_int + 22);
+                    }
+                    else if (dir_ >= 90 && dir_ < 180)
+                    {
+                        if (dir_ == 90)
+                        {
+                            dir_ = rand_int + 202;
+                        }
+                        else
+                        {
+                            dir_ = 270 - (rand_int + 112 - 90);
+                        }
+                    }
+                }
+                else if (i == int(position_.x) && (i == int(player->getPose().X + (player->getSize() / 2)))) // bounce from center of the player
+                {
+                    if (dir_ >= 0 && dir_ < 90)
+                    {
+                        dir_ = 270;
+                    }
+                    else if (dir_ >= 90 && dir_ < 180)
+                    {
+                        dir_ = 270;
+                    }
+                }
+                else if (i == int(position_.x) && (i > int(player->getPose().X + (player->getSize() / 2)))) // bounce from right side of the player
+                {
+                    if (dir_ >= 0 && dir_ < 90)
+                    {
+                        dir_ = 270 + (90 - rand_int + 22);
+                    }
+                    else if (dir_ >= 90 && dir_ < 180)
+                    {
+                        if (dir_ == 90)
+                        {
+                            dir_ = rand_int + 292;
+                        }
+                        else
+                        {
+                            dir_ = 270 + (rand_int + 112 - 90);
+                        }
+                    }
+                }
+            }
+        }
+        else if (position_.y > player->getPose().Y) // if ball under player
+        {
+            // TODO: do lost ball event better
+            this->position_.y = 3;
+            return false;
+        }
+        return true;
+    }
     bool CheckBrickCollision(GameMap *map, GameMap *bricks_map, int offset_y, int offset_x) // check ball and brick collision
     {
         // brick_map_ = bricks_map;
@@ -591,19 +604,20 @@ int main()
     gameMap.createMap(MAP_WIDHT, MAP_HEIGHT);
     gameMap.createBorder('|', '|', '=', '-');
     gameMap.showMap();
+    GameMap bricksMap;
+    bricksMap.createMap(MAP_WIDHT / 4, MAP_HEIGHT / 5);
     Sleep(1000);
     Player Pl(MAP_WIDHT / 2, MAP_HEIGHT - 3, PLAYER_SIZE, 'T', PLAYER_LIVES, &gameMap);
     Ball Orb(3, 3, 1, &gameMap);
+    BlockPlaser Blocks(MAP_WIDHT / 4, MAP_HEIGHT / 5, &bricksMap);
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
         gameMap.clearMap();
         Pl.move(MAP_WIDHT, MAP_HEIGHT);
-        
-        
-        
         Orb.move(MAP_WIDHT, MAP_HEIGHT);
         Orb.CheckPlayerCollision(&Pl);
         Orb.changePosOnMap();
+        Blocks.changePosOnMap(&gameMap, 4, 3);
         gameMap.showMap();
         // Sleep(50);
     }
