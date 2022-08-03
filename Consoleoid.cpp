@@ -120,6 +120,10 @@ struct GameMap
             }
         }
     }
+    COORD getSize()
+    {
+        return mapSize;
+    }
     void clearMap()
     {
         for (int i = 1; i < mapSize.Y - 1; i++)
@@ -170,6 +174,7 @@ public:
         lives_ = lives;
         coins_ = 0;
         size_ = size;
+        coins_ = 0;
         // draw(size, design);
     }
 
@@ -221,9 +226,9 @@ public:
     {
         return size_;
     }
-    bool setCoins(int coins)
+    void addCoins(int coins)
     {
-        coins_ = coins;
+        coins_ += coins;
     }
     bool isLastLive() // reduse lives and check that they are out
     {
@@ -354,7 +359,7 @@ private:
     GameMap *gameMap_;
     GameMap *bricksMap_;
     COORD mapSize;
-    int offset_x_, offset_y_, maxCoins_;
+    int offset_x_, offset_y_, maxCoins_ = 0;
 };
 
 class Ball
@@ -367,7 +372,7 @@ public:
         position_.x = start_pos_x;
         position_.y = start_pos_y;
         speed_ = speed;
-        dir_ = 10.0;
+        dir_ = 90.0; // start direction 0 - right, 90 - down, 270 up
         design_ = design;
     }
     void changePosOnMap() // update ball position on map and check collision
@@ -389,6 +394,8 @@ public:
         }
         if (newPosition_.x < 2 || newPosition_.x > max_x - 3) // check collision with border and bounce from border
         {
+            if (dir_ >= 360)
+                    dir_ = 0;
             if (dir_ >= 0 && dir_ < 90)
             {
                 dir_ = 180 - dir_;
@@ -471,7 +478,7 @@ public:
                 {
                     if (dir_ >= 0 && dir_ < 90)
                     {
-                        dir_ = 270 + (90 - rand_int + 22);
+                        dir_ = 270 + (90 - (rand_int + 22));
                     }
                     else if (dir_ >= 90 && dir_ < 180)
                     {
@@ -490,100 +497,39 @@ public:
         else if (position_.y > player->getPose().Y) // if ball under player
         {
             // TODO: do lost ball event better
-            this->position_.y = 3;
+            this->position_.y = 10;
             return false;
         }
         return true;
     }
-bool CheckPlayerCollision(Player *player) // check collision with player
-    {
-        short int rand_int = 1;
-        if (player->getPose().Y - 1 == int(this->position_.y)) // check player and ball line
-        {
-            for (int i = player->getPose().X; i < player->getPose().X + player->getSize(); i++) // check side of player collision with ball
-            {
-                rand_int = (rand() % 45 + 1);
-                if (i == int(position_.x) && (i < int(player->getPose().X + (player->getSize() / 2)))) // bounce from left side of the player
-                {
-                    if (dir_ >= 0 && dir_ < 90)
-                    {
-                        dir_ = 270 - (90 - rand_int + 22);
-                    }
-                    else if (dir_ >= 90 && dir_ < 180)
-                    {
-                        if (dir_ == 90)
-                        {
-                            dir_ = rand_int + 202;
-                        }
-                        else
-                        {
-                            dir_ = 270 - (rand_int + 112 - 90);
-                        }
-                    }
-                }
-                else if (i == int(position_.x) && (i == int(player->getPose().X + (player->getSize() / 2)))) // bounce from center of the player
-                {
-                    if (dir_ >= 0 && dir_ < 90)
-                    {
-                        dir_ = 270;
-                    }
-                    else if (dir_ >= 90 && dir_ < 180)
-                    {
-                        dir_ = 270;
-                    }
-                }
-                else if (i == int(position_.x) && (i > int(player->getPose().X + (player->getSize() / 2)))) // bounce from right side of the player
-                {
-                    if (dir_ >= 0 && dir_ < 90)
-                    {
-                        dir_ = 270 + (90 - rand_int + 22);
-                    }
-                    else if (dir_ >= 90 && dir_ < 180)
-                    {
-                        if (dir_ == 90)
-                        {
-                            dir_ = rand_int + 292;
-                        }
-                        else
-                        {
-                            dir_ = 270 + (rand_int + 112 - 90);
-                        }
-                    }
-                }
-            }
-        }
-        else if (position_.y > player->getPose().Y) // if ball under player
-        {
-            // TODO: do lost ball event better
-            this->position_.y = 3;
-            return false;
-        }
-        return true;
-    }
-    bool CheckBrickCollision(GameMap *map, GameMap *bricks_map, int offset_y, int offset_x) // check ball and brick collision
+
+    bool CheckBrickCollision(GameMap *bricks_map, int offset_x, int offset_y) // check ball and brick collision
     {
         // brick_map_ = bricks_map;
-        // brick_on_map_y_ = int(y_) - offset_y;
-        // brick_on_map_x_ = int(x_) - offset_x;
-        // if (brick_on_map_y_ < 0 || brick_on_map_x_ < 0 || brick_on_map_y_ > BRICKS_HEIGHT - 1 || brick_on_map_x_ > BRICKS_WIDTH - 1)
-        //     return false;
-        // if (brick_map_->map[brick_on_map_y_][brick_on_map_x_] != ' ')
-        // {
-        //     // TODO: add bounce brom brick
-        //     brick_map_->map[brick_on_map_y_][brick_on_map_x_] = ' '; // clear brick position after hit them
-        //     return true;
-        // }
-        // return false;
+        ballInBricksMap.Y = int(position_.y) - offset_y;
+        ballInBricksMap.X  = int(position_.x) - offset_x;
+        if (ballInBricksMap.Y < 0 || ballInBricksMap.X < 0 || ballInBricksMap.Y > bricks_map->mapSize.Y - 1 || ballInBricksMap.X > bricks_map->mapSize.X - 1)
+            return false;
+        if (bricks_map->globalMapVec[ballInBricksMap.Y][ballInBricksMap.X] != ' ')
+        {
+            // TODO: add bounce brom brick
+            bricks_map->globalMapVec[ballInBricksMap.Y][ballInBricksMap.X] = ' '; // clear brick position after hit them
+            bricks_map->globalMapDesignVec[ballInBricksMap.Y][ballInBricksMap.X] = bricks_map->setForeGroundAndBackGroundColor(15, 1); // clear brick position after hit them
+            
+            return true;
+        }
+        return false;
     }
     // ~Ball();
 
 private:
     FloatCoord position_;
     FloatCoord newPosition_;
+    COORD ballInBricksMap;
     GameMap *gameMap_;
     char design_;
     float dir_, speed_;
-    int brick_on_map_y_, brick_on_map_x_;
+    //int ballInBricksMap.Y, ballInBricksMap.X;
     GameMap *map_;
     GameMap *brick_map_;
 };
@@ -608,18 +554,43 @@ int main()
     bricksMap.createMap(MAP_WIDHT / 4, MAP_HEIGHT / 5);
     Sleep(1000);
     Player Pl(MAP_WIDHT / 2, MAP_HEIGHT - 3, PLAYER_SIZE, 'T', PLAYER_LIVES, &gameMap);
-    Ball Orb(3, 3, 1, &gameMap);
+    Ball Orb(MAP_WIDHT / 2, 3, 1, &gameMap);
     BlockPlaser Blocks(MAP_WIDHT / 4, MAP_HEIGHT / 5, &bricksMap);
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
         gameMap.clearMap();
         Pl.move(MAP_WIDHT, MAP_HEIGHT);
         Orb.move(MAP_WIDHT, MAP_HEIGHT);
-        Orb.CheckPlayerCollision(&Pl);
-        Orb.changePosOnMap();
+        if(!Orb.CheckPlayerCollision(&Pl))
+        {
+            if( Pl.isLastLive()) {
+                Sleep(1000);
+                return 0;
+            }
+        }
+        
+        
+        
+        if (Orb.CheckBrickCollision(&bricksMap, 4, 3)){
+            Pl.addCoins(1);
+            if( Pl.getCoins() >= Blocks.getMaxCoins()) {
+                Sleep(1000);
+                return 0;
+            }
+        }
         Blocks.changePosOnMap(&gameMap, 4, 3);
+        Orb.changePosOnMap();
         gameMap.showMap();
         // Sleep(50);
+        SetConsoleTextAttribute(h, 14); // show additional information in console
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {MAP_WIDHT + 1, 1});
+        cout << "Lives: " << Pl.getLives();
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),COORD {MAP_WIDHT + 1, 2});
+        cout << "Coins: " << Pl.getCoins();
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),COORD {MAP_WIDHT + 1, 4});
+        cout << "Max coins: " << Blocks.getMaxCoins();
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {MAP_WIDHT + 1, MAP_HEIGHT - 2});
+        cout << "ESC: exit";
     }
 
     /*
@@ -687,15 +658,7 @@ int main()
 
             return 0;
         }
-        SetConsoleTextAttribute(h, 14); // show additional information in console
-        MoveXY(mWidth + 1, 1);
-        cout << "Lives: " << Pl.getLives();
-        MoveXY(mWidth + 1, 2);
-        cout << "Coins: " << Pl.getCoins();
-        MoveXY(mWidth + 1, 4);
-        cout << "Max coins: " << Blocks.getMaxCoins();
-        MoveXY(mWidth + 1, mHeight - 2);
-        cout << "ESC: exit";
+        
 
         // TODO: add a speed control
         Sleep(100); // set game speed
