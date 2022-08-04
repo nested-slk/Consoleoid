@@ -9,8 +9,24 @@ struct GameMap;
 
 #define MAP_WIDHT 40
 #define MAP_HEIGHT 20
+#define BLOCKS_OFFSET_X 4
+#define BLOCKS_OFFSET_Y 3
+
+#define PLAYER_MOVE_LEFT_BTN 'A'
+#define PLAYER_MOVE_RIGHT_BTN 'D'
+#define PLAYER_SELECT_BTN VK_SPACE
+#define PLAYER_EXIT_BTN VK_ESCAPE
+
 #define PLAYER_SIZE 7
 #define PLAYER_LIVES 3
+#define PLAYER_POSITION_X ((MAP_WIDHT / 2) - (PLAYER_SIZE / 2))
+#define PLAYER_POSITION_Y (MAP_HEIGHT - 3)
+#define PLAYER_SYMBOL 'T'
+
+#define BALL_SPEED 1
+#define BLOCK_SIZE 2
+
+#define MAX_MODE 2
 
 struct FloatCoord
 {
@@ -250,62 +266,16 @@ private:
     short int size_, lives_;
     char design_;
 };
-/*
-class Block
-{
-private:
-    int armor, points;
 
-public:
-    Block(unsigned short int armor, unsigned short int points)
-    {
-        this->armor = armor;
-        this->points = points;
-    }
-    Block(unsigned short int level)
-    {
-        if (level == 1)
-        {
-            this->armor = 1;
-            this->points = 1;
-        }
-        else if (level == 2)
-        {
-            this->armor = 2;
-            this->points = 3;
-        }
-        else if (level == 3)
-        {
-            this->armor = 3;
-            this->points = 5;
-        }
-    }
-};
-*/
 class BlockPlaser
 {
 public:
-    void createBricks(int brickSize, int stepX, int stepY)
-    {
-        for (int i = 0; i < this->mapSize.Y; i += 2)
-        {
-            for (int j = 0; j < this->mapSize.X; j = j + brickSize + stepX)
-            {
-                for (int k = 0; k < brickSize; k++)
-                {
-                    bricksMap_->globalMapVec[i][j + k] = ('H');
-                    bricksMap_->globalMapDesignVec[i][j + k] = bricksMap_->setForeGroundAndBackGroundColor(5, 14);
-                }
-                maxCoins_++;
-            }
-        }
-    }
     BlockPlaser(int x, int y, GameMap *bricksMap) // set bricks on brick map and set the offest from the global map
     {
         bricksMap_ = bricksMap;
         mapSize.X = x;
         mapSize.Y = y;
-        this->createBricks(2, 1, 2);
+        // this->createBricks(2, 1, 2);
         //     bricks_map_ = map;
         //     offset_x_ = offset_x;
         //     offset_y_ = offset_y;
@@ -335,6 +305,23 @@ public:
         //         }
         //     }
     }
+    void createBricks(int brickSize, int stepX, int stepY, GameMap *bricksMap)
+    {
+        bricksMap_ = bricksMap;
+        for (int i = 0; i < this->mapSize.Y; i += 2)
+        {
+            for (int j = 0; j < this->mapSize.X; j = j + brickSize + stepX)
+            {
+                for (int k = 0; k < brickSize; k++)
+                {
+                    bricksMap_->globalMapVec[i][j + k] = ('H');
+                    bricksMap_->globalMapDesignVec[i][j + k] = bricksMap_->setForeGroundAndBackGroundColor(5, 14);
+                }
+                maxCoins_++;
+            }
+        }
+    }
+
     void changePosOnMap(GameMap *map, int offset_x, int offset_y) // add bricks on global map
     {
         offset_x_ = offset_x;
@@ -356,10 +343,44 @@ public:
     }
     // ~BlockPlaser();
 private:
+    // Pl pl;
     GameMap *gameMap_;
     GameMap *bricksMap_;
     COORD mapSize;
     int offset_x_, offset_y_, maxCoins_ = 0;
+};
+class Button
+{
+public:
+    Button(string text, COORD position)
+    {
+        position_ = position;
+        text_ = text;
+    }
+    void placeButtonOnMap(GameMap *gameMap)
+    {
+        for (int k = 0; k < text_.length(); k++)
+        {
+            COORD pos;
+            pos.X = position_.X + k;
+            pos.Y = position_.Y;
+            gameMap->placeOnMap(pos, text_[k], gameMap->setForeGroundAndBackGroundColor(5, 14));
+        }
+    }
+    bool checkButtonPlayerCollision(Player *player)
+    {
+        for (int k = 0; k < text_.length(); k++)
+        {
+            if (position_.X + k == player->getPose().X)
+            {
+                return true;
+            }
+        }
+    }
+
+private:
+    COORD position_;
+    string text_;
 };
 
 class Ball
@@ -395,7 +416,7 @@ public:
         if (newPosition_.x < 2 || newPosition_.x > max_x - 3) // check collision with border and bounce from border
         {
             if (dir_ >= 360)
-                    dir_ = 0;
+                dir_ = 0;
             if (dir_ >= 0 && dir_ < 90)
             {
                 dir_ = 180 - dir_;
@@ -437,7 +458,7 @@ public:
         position_.x = newPosition_.x;
         position_.y = newPosition_.y;
     }
-    bool CheckPlayerCollision(Player *player) // check collision with player
+    bool checkPlayerCollision(Player *player) // check collision with player
     {
         short int rand_int = 1;
         if (player->getPose().Y - 1 == int(this->position_.y)) // check player and ball line
@@ -497,25 +518,26 @@ public:
         else if (position_.y > player->getPose().Y) // if ball under player
         {
             // TODO: do lost ball event better
-            this->position_.y = 10;
+            this->position_.y = MAP_HEIGHT / 2;
+            this->dir_ = 90;
             return false;
         }
         return true;
     }
 
-    bool CheckBrickCollision(GameMap *bricks_map, int offset_x, int offset_y) // check ball and brick collision
+    bool checkBrickCollision(GameMap *bricks_map, int offset_x, int offset_y) // check ball and brick collision
     {
         // brick_map_ = bricks_map;
         ballInBricksMap.Y = int(position_.y) - offset_y;
-        ballInBricksMap.X  = int(position_.x) - offset_x;
+        ballInBricksMap.X = int(position_.x) - offset_x;
         if (ballInBricksMap.Y < 0 || ballInBricksMap.X < 0 || ballInBricksMap.Y > bricks_map->mapSize.Y - 1 || ballInBricksMap.X > bricks_map->mapSize.X - 1)
             return false;
         if (bricks_map->globalMapVec[ballInBricksMap.Y][ballInBricksMap.X] != ' ')
         {
             // TODO: add bounce brom brick
-            bricks_map->globalMapVec[ballInBricksMap.Y][ballInBricksMap.X] = ' '; // clear brick position after hit them
+            bricks_map->globalMapVec[ballInBricksMap.Y][ballInBricksMap.X] = ' ';                                                      // clear brick position after hit them
             bricks_map->globalMapDesignVec[ballInBricksMap.Y][ballInBricksMap.X] = bricks_map->setForeGroundAndBackGroundColor(15, 1); // clear brick position after hit them
-            
+
             return true;
         }
         return false;
@@ -529,68 +551,153 @@ private:
     GameMap *gameMap_;
     char design_;
     float dir_, speed_;
-    //int ballInBricksMap.Y, ballInBricksMap.X;
+    // int ballInBricksMap.Y, ballInBricksMap.X;
     GameMap *map_;
     GameMap *brick_map_;
 };
 
 class Game
 {
+public:
+    Game() : Pl(PLAYER_POSITION_X, PLAYER_POSITION_Y, PLAYER_SIZE, PLAYER_SYMBOL, PLAYER_LIVES, &gameMap),
+             Orb(MAP_WIDHT / 2, MAP_HEIGHT / 2, BALL_SPEED, &gameMap),
+             Blocks(MAP_WIDHT / 4, MAP_HEIGHT / 5, &bricksMap),
+             NewGame("new game", COORD{3, PLAYER_POSITION_Y})
+    {
+        h_ = GetStdHandle(STD_OUTPUT_HANDLE); // console object;
+        CONSOLE_CURSOR_INFO cursor;
+        cursor.bVisible = false; // invisible cursor
+        cursor.dwSize = 1;
+        SetConsoleCursorInfo(h_, &cursor); // update cursor in console
+    }
+    bool menu()
+    {
+        this->show();
+        this->showKeyInfo();
+        Pl.move(MAP_WIDHT, MAP_HEIGHT);
+        NewGame.placeButtonOnMap(&gameMap);
+        if (NewGame.checkButtonPlayerCollision(&Pl))
+            return false;
+        return true;
+    }
+    bool doGame()
+    {
+        this->move();
+        this->update();
+        this->checkPlayerCollision();
+        this->checkBrickCollision();
+        this->show();
+        this->showGameInfo();
+        this->showKeyInfo();
+        return true;
+    }
+    void createGameMap()
+    {
+        gameMap.createMap(MAP_WIDHT, MAP_HEIGHT);
+        gameMap.createBorder('|', '|', '=', '-');
+        bricksMap.createMap(MAP_WIDHT / 4, MAP_HEIGHT / 5);
+        Blocks.createBricks(BLOCK_SIZE, 1, 1, &bricksMap);
+        // gameMap.showMap();
+    }
+    void update()
+    {
+        Blocks.changePosOnMap(&gameMap, BLOCKS_OFFSET_X, BLOCKS_OFFSET_Y);
+        Orb.changePosOnMap();
+    }
+    void move()
+    {
+        Pl.move(MAP_WIDHT, MAP_HEIGHT);
+        Orb.move(MAP_WIDHT, MAP_HEIGHT);
+    }
+    void checkPlayerCollision()
+    {
+        if (!Orb.checkPlayerCollision(&Pl))
+        {
+            if (Pl.isLastLive())
+            {
+                Sleep(1000);
+                // return 0;
+            }
+        }
+    }
+    void checkBrickCollision()
+    {
+        if (Orb.checkBrickCollision(&bricksMap, BLOCKS_OFFSET_X, BLOCKS_OFFSET_Y))
+        {
+            Pl.addCoins(1);
+            if (Pl.getCoins() >= Blocks.getMaxCoins())
+            {
+                Sleep(1000);
+                // return 0;
+            }
+        }
+    }
+    void show()
+    {
+        gameMap.showMap();
+        gameMap.clearMap();
+    }
+    void showGameInfo()
+    {
+        SetConsoleTextAttribute(h_, 14); // show additional information in console
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, 1});
+        cout << "Lives: " << Pl.getLives();
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, 2});
+        cout << "Coins: " << Pl.getCoins();
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, 4});
+        cout << "Max coins: " << Blocks.getMaxCoins();
+    }
+    void showKeyInfo()
+    {
+        SetConsoleTextAttribute(h_, 14);
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, MAP_HEIGHT - 2});
+        cout << PLAYER_EXIT_BTN << ": exit";
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, MAP_HEIGHT - 3});
+        cout << PLAYER_SELECT_BTN << ": select";
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, MAP_HEIGHT - 4});
+        cout << PLAYER_MOVE_LEFT_BTN << ": left";
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{MAP_WIDHT + 1, MAP_HEIGHT - 5});
+        cout << PLAYER_MOVE_RIGHT_BTN << ": right";
+    }
+
+private:
+    HANDLE h_;
+    GameMap gameMap;
+    GameMap bricksMap;
+    Player Pl;
+    Ball Orb;
+    BlockPlaser Blocks;
+    Button NewGame;
 };
 int main()
 {
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
-
-    CONSOLE_CURSOR_INFO cursor;
-    cursor.bVisible = false; // invisible cursor
-    cursor.dwSize = 1;
-    SetConsoleCursorInfo(h, &cursor); // update cursor in console
-
-    GameMap gameMap;
-    gameMap.createMap(MAP_WIDHT, MAP_HEIGHT);
-    gameMap.createBorder('|', '|', '=', '-');
-    gameMap.showMap();
-    GameMap bricksMap;
-    bricksMap.createMap(MAP_WIDHT / 4, MAP_HEIGHT / 5);
-    Sleep(1000);
-    Player Pl(MAP_WIDHT / 2, MAP_HEIGHT - 3, PLAYER_SIZE, 'T', PLAYER_LIVES, &gameMap);
-    Ball Orb(MAP_WIDHT / 2, 3, 1, &gameMap);
-    BlockPlaser Blocks(MAP_WIDHT / 4, MAP_HEIGHT / 5, &bricksMap);
+    Game Consoleoid;
+    short int mode = 1;
+    Consoleoid.createGameMap();
     while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
     {
-        gameMap.clearMap();
-        Pl.move(MAP_WIDHT, MAP_HEIGHT);
-        Orb.move(MAP_WIDHT, MAP_HEIGHT);
-        if(!Orb.CheckPlayerCollision(&Pl))
+        switch (mode)
         {
-            if( Pl.isLastLive()) {
-                Sleep(1000);
-                return 0;
+        case 1: // menu
+            if (!Consoleoid.menu())
+            {
+                mode++;
             }
-        }
-        
-        
-        
-        if (Orb.CheckBrickCollision(&bricksMap, 4, 3)){
-            Pl.addCoins(1);
-            if( Pl.getCoins() >= Blocks.getMaxCoins()) {
-                Sleep(1000);
-                return 0;
+            break;
+        case 2: // game
+            if (!Consoleoid.doGame())
+            {
+                mode++;
             }
+            break;
+        default:
+            break;
         }
-        Blocks.changePosOnMap(&gameMap, 4, 3);
-        Orb.changePosOnMap();
-        gameMap.showMap();
-        // Sleep(50);
-        SetConsoleTextAttribute(h, 14); // show additional information in console
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {MAP_WIDHT + 1, 1});
-        cout << "Lives: " << Pl.getLives();
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),COORD {MAP_WIDHT + 1, 2});
-        cout << "Coins: " << Pl.getCoins();
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),COORD {MAP_WIDHT + 1, 4});
-        cout << "Max coins: " << Blocks.getMaxCoins();
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD {MAP_WIDHT + 1, MAP_HEIGHT - 2});
-        cout << "ESC: exit";
+        if (mode > MAX_MODE)
+        {
+            mode = 1;
+        }
+        Sleep(25); // rate
     }
 
     /*
@@ -658,7 +765,7 @@ int main()
 
             return 0;
         }
-        
+
 
         // TODO: add a speed control
         Sleep(100); // set game speed
