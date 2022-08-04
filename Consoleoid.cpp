@@ -376,6 +376,7 @@ public:
                 return true;
             }
         }
+        return false;
     }
 
 private:
@@ -401,7 +402,7 @@ public:
         COORD pos;
         pos.X = position_.x;
         pos.Y = position_.y;
-        gameMap_->placeOnMap(pos, design_, 4, 1);
+        gameMap_->placeOnMap(pos, design_, 6, 1);
     }
     void move(int max_x, int max_y) // update ball position on map and check collision
     {
@@ -542,6 +543,10 @@ public:
         }
         return false;
     }
+    void setPosX(int x)
+    {
+        position_.x = x;
+    }
     // ~Ball();
 
 private:
@@ -577,14 +582,20 @@ public:
         Pl.move(MAP_WIDHT, MAP_HEIGHT);
         NewGame.placeButtonOnMap(&gameMap);
         if (NewGame.checkButtonPlayerCollision(&Pl))
+        {
+            Orb.setPosX(Pl.getPose().X);
             return false;
+        }
         return true;
     }
     bool doGame()
     {
         this->move();
         this->update();
-        this->checkPlayerCollision();
+        if (!(this->checkPlayerCollision()))
+        {
+            return false;
+        }
         this->checkBrickCollision();
         this->show();
         this->showGameInfo();
@@ -609,16 +620,17 @@ public:
         Pl.move(MAP_WIDHT, MAP_HEIGHT);
         Orb.move(MAP_WIDHT, MAP_HEIGHT);
     }
-    void checkPlayerCollision()
+    bool checkPlayerCollision()
     {
         if (!Orb.checkPlayerCollision(&Pl))
         {
             if (Pl.isLastLive())
             {
                 Sleep(1000);
-                // return 0;
+                return false;
             }
         }
+        return true;
     }
     void checkBrickCollision()
     {
