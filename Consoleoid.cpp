@@ -50,7 +50,7 @@ struct GameMap
     short int playerSize;
     void placeOnMap(COORD position, char symbol, WORD textColor, WORD bgColor)
     {
-        if (position.X > 0 && position.X <= this->mapSize.X && position.Y > 0 && position.Y <= this->mapSize.Y) //
+        if (position.X > 0 && position.X <= mapSize.X && position.Y > 0 && position.Y <= mapSize.Y) //
         {
             globalMapVec[position.Y][position.X] = symbol;
             globalMapDesignVec[position.Y][position.X] = setForeGroundAndBackGroundColor(textColor, bgColor);
@@ -58,7 +58,7 @@ struct GameMap
     }
     void placeOnMap(COORD position, char symbol, WORD dataColor)
     {
-        if (position.X > 0 && position.X <= this->mapSize.X && position.Y > 0 && position.Y <= this->mapSize.Y) //
+        if (position.X > 0 && position.X <= mapSize.X && position.Y > 0 && position.Y <= mapSize.Y) //
         {
             globalMapVec[position.Y][position.X] = symbol;
             globalMapDesignVec[position.Y][position.X] = dataColor;
@@ -66,9 +66,9 @@ struct GameMap
     }
     void createBorder(char leftWallSymbol, char rightWallSymbol, char bottomtWallSymbol, char topWallSymbol)
     {
-        for (int i = 0; i < this->mapSize.Y; i++)
+        for (int i = 0; i < mapSize.Y; i++)
         {
-            for (int j = 0; j < this->mapSize.X; j++)
+            for (int j = 0; j < mapSize.X; j++)
             {
                 if (i == 0) // find borders positions
                 {
@@ -95,25 +95,25 @@ struct GameMap
     }
     void createMap(int x, int y)
     {
-        this->mapSize.X = x;
-        this->mapSize.Y = y;
+        mapSize.X = x;
+        mapSize.Y = y;
 
-        globalMapVec.resize(this->mapSize.Y);
-        for (int i = 0; i < this->mapSize.Y; i++)
+        globalMapVec.resize(mapSize.Y);
+        for (int i = 0; i < mapSize.Y; i++)
         {
-            globalMapVec[i].resize(this->mapSize.X + 1);
-            for (int j = 0; j < this->mapSize.X; j++)
+            globalMapVec[i].resize(mapSize.X + 1);
+            for (int j = 0; j < mapSize.X; j++)
             {
                 globalMapVec[i][j] = (' ');
             }
-            globalMapVec[i][this->mapSize.X] = ('\n');
+            globalMapVec[i][mapSize.X] = ('\n');
         }
 
-        globalMapDesignVec.resize(this->mapSize.Y);
-        for (int i = 0; i < this->mapSize.Y; i++)
+        globalMapDesignVec.resize(mapSize.Y);
+        for (int i = 0; i < mapSize.Y; i++)
         {
-            globalMapDesignVec[i].resize(this->mapSize.X + 1);
-            for (int j = 0; j < this->mapSize.X; j++)
+            globalMapDesignVec[i].resize(mapSize.X + 1);
+            for (int j = 0; j < mapSize.X; j++)
             {
                 globalMapDesignVec[i][j] = setForeGroundAndBackGroundColor(15, 1);
             }
@@ -193,7 +193,6 @@ public:
         coins_ = 0;
         // draw(size, design);
     }
-
     void draw(short int size = 4, char design = '=') // add player to the global map
     {
         design_ = design;
@@ -216,13 +215,13 @@ public:
     }
     void move(int max_x, int max_y, char up = 'w', char left = 'A', char down = 'S', char right = 'D') // player control from keyboard
     {
-        if ((GetKeyState(left) & 0x8000) && this->position_.X > 1) // check pressed key and player position to stay between borders
+        if ((GetKeyState(left) & 0x8000) && position_.X > 1) // check pressed key and player position to stay between borders
         {
-            this->position_.X -= 1;
+            position_.X -= 1;
         }
-        else if ((GetKeyState(right) & 0x8000) && this->position_.X < max_x - 1 - size_) // check pressed key and player position to stay between borders
+        else if ((GetKeyState(right) & 0x8000) && position_.X < max_x - 1 - size_) // check pressed key and player position to stay between borders
         {
-            this->position_.X += 1;
+            position_.X += 1;
         }
         changePosOnMap();
     }
@@ -275,42 +274,13 @@ public:
         bricksMap_ = bricksMap;
         mapSize.X = x;
         mapSize.Y = y;
-        // this->createBricks(2, 1, 2);
-        //     bricks_map_ = map;
-        //     offset_x_ = offset_x;
-        //     offset_y_ = offset_y;
-        //     short int rand_int;
-        //     max_coins_ = 0;
-        //     // TODO: add clear method in GameMap
-        //     for (int j = 0; j < BRICKS_HEIGHT; j += 1) // clear brick map
-        //     {
-        //         for (int i = 0; i < BRICKS_WIDTH; i += 1)
-        //         {
-
-        //             bricks_map_->map[j][i] = ' ';
-        //         }
-        //     }
-        //     for (int j = 0; j < BRICKS_HEIGHT; j += 2) // add on map various blocks
-        //     {
-        //         for (int i = 0; i < BRICKS_WIDTH; i += 2)
-        //         {
-        //             this->max_coins_++;
-        //             rand_int = (rand() % 3 + 1);
-        //             if (rand_int == 1)
-        //                 bricks_map_->map[j][i] = 'V';
-        //             else if (rand_int == 2)
-        //                 bricks_map_->map[j][i] = 'U';
-        //             else
-        //                 map->map[j][i] = 'v';
-        //         }
-        //     }
     }
     void createBricks(int brickSize, int stepX, int stepY, GameMap *bricksMap)
     {
         bricksMap_ = bricksMap;
-        for (int i = 0; i < this->mapSize.Y; i += 2)
+        for (int i = 0; i < mapSize.Y; i += 2)
         {
-            for (int j = 0; j < this->mapSize.X; j = j + brickSize + stepX)
+            for (int j = 0; j < mapSize.X; j = j + brickSize + stepX)
             {
                 for (int k = 0; k < brickSize; k++)
                 {
@@ -326,9 +296,9 @@ public:
     {
         offset_x_ = offset_x;
         offset_y_ = offset_y;
-        for (int j = 0; j < this->mapSize.Y; j++)
+        for (int j = 0; j < mapSize.Y; j++)
         {
-            for (int i = 0; i < this->mapSize.X; i++)
+            for (int i = 0; i < mapSize.X; i++)
             {
                 COORD pos;
                 pos.X = i + offset_x_;
@@ -462,7 +432,7 @@ public:
     bool checkPlayerCollision(Player *player) // check collision with player
     {
         short int rand_int = 1;
-        if (player->getPose().Y - 1 == int(this->position_.y)) // check player and ball line
+        if (player->getPose().Y - 1 == int(position_.y)) // check player and ball line
         {
             for (int i = player->getPose().X; i < player->getPose().X + player->getSize(); i++) // check side of player collision with ball
             {
@@ -519,8 +489,8 @@ public:
         else if (position_.y > player->getPose().Y) // if ball under player
         {
             // TODO: do lost ball event better
-            this->position_.y = MAP_HEIGHT / 2;
-            this->dir_ = 90;
+            position_.y = MAP_HEIGHT / 2;
+            dir_ = 90;
             return false;
         }
         return true;
@@ -640,7 +610,6 @@ public:
             if (Pl.getCoins() >= Blocks.getMaxCoins())
             {
                 Sleep(1000);
-                // return 0;
             }
         }
     }
@@ -711,77 +680,5 @@ int main()
         }
         Sleep(25); // rate
     }
-
-    /*
-    GameMap global_map; // create map
-    GameMap brick_map;
-    global_map.addBorder('|', '|', '=', '='); // add border on map
-    global_map.show();                        // show map on screen
-
-    Player Pl((mWidth / 2), (mHeight - 3), PLAYER_SIZE, 'T', PLAYER_LIVES, &global_map); // create player
-    Pl.setCoins(0);
-
-    BlockPlaser Blocks(&brick_map, 4, 2);   // create bricks
-    Ball Orb('O', mHeight / 2, mWidth / 2); // create orb
-
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); // console object
-
-    CONSOLE_CURSOR_INFO cursor;
-    cursor.bVisible = false; // invisible cursor
-    cursor.dwSize = 1;
-    SetConsoleCursorInfo(h, &cursor); // update cursor in console
-
-    MoveXY((mWidth / 2) - 10, mHeight / 2); // print info
-    cout << "Game start in: ";
-    SetConsoleTextAttribute(h, 4); // change text color
-    for (int i = 0; i < 3; i++)
-    {
-        cout << 3 - i;
-        Sleep(1000);
-    }
-    cout << " --> GO!";
-    Sleep(1000);
-    SetConsoleTextAttribute(h, 7); // change text color
-
-    while (GetKeyState(VK_ESCAPE) >= 0) // ESC key to close console
-    {
-        global_map.clearInsideBorder();
-        Blocks.update(&global_map); // update positions
-        Orb.update(&global_map);
-        if (!Orb.CheckPlayerCollision(&global_map, Pl.getPosX(), Pl.getPosY(), Pl.getSize())) // check that the player hit the ball
-        {
-            if (Pl.isLastLive()) // if its last life of the player then exit from game
-            {
-                return 0;
-            }
-        }
-        if (Orb.CheckBrickCollision(&global_map, &brick_map, 2, 4)) // add a coin for hiting the brick
-            Pl.setCoins(Pl.getCoins() + 1);
-        if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
-        {
-            MoveXY((mWidth / 2) - 5, mHeight / 2);
-            cout << "You win!";
-            Sleep(5000);
-
-            return 0;
-        }
-        Pl.move(); // check palyer moving
-
-        SetConsoleTextAttribute(h, 7); // set color and show changes in console
-        global_map.show();
-        if (Pl.getCoins() == Blocks.getMaxCoins()) // when the blocks are over
-        {
-            MoveXY((mWidth / 2) - 5, mHeight / 2);
-            cout << "You win!";
-            Sleep(5000);
-
-            return 0;
-        }
-
-
-        // TODO: add a speed control
-        Sleep(100); // set game speed
-    }
-*/
     return 0;
 }
